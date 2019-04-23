@@ -62,7 +62,7 @@ public class BlockTypeEntry {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 47 * hash + this.getMaterial().getId();
+        hash = 47 * hash + this.getMaterial().ordinal();
         return hash;
     }
 
