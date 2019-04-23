@@ -24,8 +24,6 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.yi.acru.bukkit.Lockette.Lockette;
-import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +38,6 @@ public final class PermissionsManager {
     private static Economy economy = null;
     private PermissionHandler handler = null;
     private PermissionsPlugin pbukkit = null;
-    private PermissionsEx pex = null;
     private LWC lwc = null;
     private Lockette lockette = null;
     private PreciousStones plugin;
@@ -104,13 +101,6 @@ public final class PermissionsManager {
     }
 
     private void detectPermissionsEx() {
-        if (pex == null) {
-            Plugin test = plugin.getServer().getPluginManager().getPlugin("PermissionsEx");
-
-            if (test != null) {
-                pex = (PermissionsEx) test;
-            }
-        }
     }
 
     private void detectPermissionsBukkit() {
@@ -210,15 +200,7 @@ public final class PermissionsManager {
      */
     public boolean inGroup(String playerName, World world, String group) {
         try {
-            if (pex != null) {
-                PermissionUser user = PermissionsEx.getUser(playerName);
-
-                if (user != null) {
-                    return user.inGroup(group);
-                }
-
-                return false;
-            } else if (pbukkit != null) {
+            if (pbukkit != null) {
                 List<Group> groups = pbukkit.getGroups(playerName);
 
                 for (Group g : groups) {
@@ -249,15 +231,7 @@ public final class PermissionsManager {
         List<String> groups = new ArrayList<>();
 
         try {
-            if (pex != null) {
-                PermissionUser user = PermissionsEx.getUser(playerName);
-
-                if (user != null) {
-                    String[] pexGroups = user.getGroupsNames();
-
-                    Collections.addAll(groups, pexGroups);
-                }
-            } else if (pbukkit != null) {
+            if (pbukkit != null) {
                 List<Group> gs = pbukkit.getGroups(playerName);
 
                 for (Group group : gs) {
