@@ -5,8 +5,8 @@
 
     <groupId>net.sacredlabyrinth.Phaed</groupId>
     <artifactId>PreciousStones</artifactId>
-    <version>11.0</version>
-    <name>PreciousStones-1.13</name>
+    <version>12.0</version>
+    <name>PreciousStones-1.14</name>
     <url>http://dev.bukkit.org/server-mods/preciousstones/</url>
 
     <build>
@@ -128,12 +128,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>ru.tehkode</groupId>
-            <artifactId>PermissionsEx</artifactId>
-            <version>1.22.3</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>com.trc202.CombatTag</groupId>
             <artifactId>CombatTag</artifactId>
             <version>6.2.0</version>
@@ -200,10 +194,6 @@
         <repository>
             <id>sk89q</id>
             <url>http://maven.sk89q.com/repo/</url>
-        </repository>
-        <repository>
-            <id>remote-repos</id>
-            <url>http://104.236.246.108:8081/artifactory/remote-repos</url>
         </repository>
         <repository>
             <id>elMakers</id>
