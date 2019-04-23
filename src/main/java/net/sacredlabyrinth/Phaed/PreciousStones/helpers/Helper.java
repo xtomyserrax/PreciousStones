@@ -916,7 +916,7 @@ public class Helper {
             }
         }
         Material material = materialIdMap.get(id);
-        if (material.isLegacy()) {
+        if (material != null && material.isLegacy()) {
             Material converted = Bukkit.getUnsafe().fromLegacy(material);
             if (converted != null && converted != Material.AIR) {
                 material = converted;

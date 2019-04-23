@@ -58,10 +58,11 @@ public class BlockTypeEntry {
         return id1 == id2;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 47 * hash + this.getMaterial().ordinal();
+        hash = 47 * hash + this.getMaterial().getId();
         return hash;
     }
 
