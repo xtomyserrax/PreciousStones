@@ -16,10 +16,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.projectiles.ProjectileSource;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +30,7 @@ import java.util.regex.Pattern;
  */
 public class Helper {
     private static Map<Integer, Material> materialIdMap;
+    private static Field materialIdField;
 
     /**
      * Dumps stacktrace to log
@@ -927,6 +930,16 @@ public class Helper {
 
     @SuppressWarnings("deprecation")
     public static int getMaterialId(Material material) {
-        return material.getId();
+        int id = -1;
+        try {
+            if (materialIdField == null) {
+                materialIdField = Material.class.getDeclaredField("id");
+                materialIdField.setAccessible(true);
+            }
+            id = (int)materialIdField.get(material);
+        } catch (Exception ex) {
+            org.bukkit.Bukkit.getLogger().log(Level.SEVERE, "PreciousStones failed to hackily workaround Material.getId legacy issues, all is lost, abandon hope", ex);
+        }
+        return id;
     }
 }

@@ -61,9 +61,8 @@ public class BlockTypeEntry {
     @SuppressWarnings("deprecation")
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 47 * hash + this.getMaterial().ordinal();
-        return hash;
+        if (material == null) return 0;
+        return material.hashCode();
     }
 
     @Override
