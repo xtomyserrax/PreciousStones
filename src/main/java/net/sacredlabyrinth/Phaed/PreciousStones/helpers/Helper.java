@@ -915,7 +915,7 @@ public class Helper {
             Object[] allMaterials = Material.AIR.getDeclaringClass().getEnumConstants();
             for (Object o : allMaterials) {
                 Material material = (Material)o;
-                materialIdMap.put(material.getId(), material);
+                materialIdMap.put(getMaterialId(material), material);
             }
         }
         Material material = materialIdMap.get(id);
