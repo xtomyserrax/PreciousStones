@@ -258,28 +258,27 @@ public final class ForesterManager {
                 block.setType(Material.TALL_GRASS, false); // tall grass
                 return;
             case 1:
-                block.setType(Material.POPPY, false); // tall grass
+                block.setType(Material.ROSE_BUSH, false); // tall grass
                 return;
             case 2:
                 block.setType(Material.OXEYE_DAISY, false); // tall grass
                 return;
             case 3:
-                block.setType(Material.DANDELION_YELLOW, false); // yellow flower
+                block.setType(Material.DANDELION, false); // yellow flower
                 return;
             case 4:
-                block.setType(Material.ROSE_RED, false); // red flower
+                block.setType(Material.POPPY, false); // red flower
                 return;
             case 5:
                 block.setType(Material.BROWN_MUSHROOM, false); // brown shroom
                 return;
             case 6:
                 block.setType(Material.RED_MUSHROOM, false); // red shroom
-                return;
         }
     }
 
     private boolean isSeeThrough(Material type) {
-        return type == Material.AIR || type == Material.DEAD_BUSH || type == Material.DEAD_BUSH || type == Material.DANDELION || type == Material.POPPY || type == Material.OAK_LEAVES || type == Material.OAK_SAPLING;
+        return type == Material.AIR || type == Material.DEAD_BUSH || type == Material.DANDELION || type == Material.POPPY || type == Material.OAK_LEAVES || type == Material.OAK_SAPLING;
     }
 
     /**

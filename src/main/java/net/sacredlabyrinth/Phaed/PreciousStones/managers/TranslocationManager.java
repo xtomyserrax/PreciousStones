@@ -12,6 +12,7 @@ import net.sacredlabyrinth.Phaed.PreciousStones.translocation.TranslocationRemov
 import net.sacredlabyrinth.Phaed.PreciousStones.translocation.TranslocationUpdater;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -103,7 +104,7 @@ public final class TranslocationManager {
 
         TranslocationBlock tb = new TranslocationBlock(field, block);
 
-        if (block.getType().equals(Material.WALL_SIGN) || block.getType().equals(Material.SIGN)) {
+        if (Tag.SIGNS.isTagged(block.getType()) || Tag.WALL_SIGNS.isTagged(block.getType())) {
             tb.setSignText(getSignText(block));
         }
 
@@ -347,7 +348,7 @@ public final class TranslocationManager {
             return null;
         }
 
-        if (block.getType().equals(Material.WALL_SIGN) || block.getType().equals(Material.SIGN)) {
+        if (Tag.WALL_SIGNS.isTagged(block.getType()) || Tag.SIGNS.isTagged(block.getType())) {
             tb.setSignText(getSignText(block));
         }
 
@@ -390,7 +391,7 @@ public final class TranslocationManager {
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
             for (Player p : inhabitants) {
-                p.sendBlockChange(field.getLocation(), field.getMaterial(), (byte)0);
+                p.sendBlockChange(field.getLocation(), field.getMaterial(), (byte) 0);
             }
         }, 20);
     }

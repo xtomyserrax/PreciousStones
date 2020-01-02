@@ -1,11 +1,8 @@
 package net.sacredlabyrinth.Phaed.PreciousStones.managers;
 
-import br.net.fabiozumbi12.RedProtect.API.RedProtectAPI;
-import br.net.fabiozumbi12.RedProtect.RedProtect;
-import br.net.fabiozumbi12.RedProtect.Region;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.managers.RegionManager;
+import br.net.fabiozumbi12.RedProtect.Bukkit.API.RedProtectAPI;
+import br.net.fabiozumbi12.RedProtect.Bukkit.RedProtect;
+import br.net.fabiozumbi12.RedProtect.Bukkit.Region;
 import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
 import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldSettings;
 import org.bukkit.Bukkit;
@@ -18,12 +15,14 @@ import org.bukkit.plugin.Plugin;
 public class RedProtectManager {
     private PreciousStones plugin;
     private static boolean hasRedProtect;
+    private RedProtectAPI redProtectAPI;
 
     /**
      *
      */
     public RedProtectManager() {
         plugin = PreciousStones.getInstance();
+       this.redProtectAPI = RedProtect.get().getAPI();
         hasRedProtect = checkRedProtect();
     }
 
@@ -38,7 +37,7 @@ public class RedProtectManager {
                 return false;
             }
 
-            Region region = RedProtectAPI.getRegion(block.getLocation());
+            Region region = redProtectAPI.getRegion(block.getLocation());
 
             return region != null;
         } catch (Exception ex) {
@@ -62,7 +61,7 @@ public class RedProtectManager {
                 return false;
             }
 
-            Region region = RedProtectAPI.getRegion(loc);
+            Region region = redProtectAPI.getRegion(loc);
 
             if (region == null) {
                 return true;
