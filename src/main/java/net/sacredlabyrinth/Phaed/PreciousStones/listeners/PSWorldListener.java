@@ -6,7 +6,6 @@ import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldFlag;
 import net.sacredlabyrinth.Phaed.PreciousStones.vectors.ChunkVec;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -44,9 +43,9 @@ public class PSWorldListener implements Listener {
         }
 
         List<Field> fields = plugin.getForceFieldManager().getSourceFieldsInChunk(new ChunkVec(event.getChunk()), FieldFlag.KEEP_CHUNKS_LOADED);
-        // todo find location where it should be marked
+
         if (!fields.isEmpty()) {
-            // event.setCancelled(true);
+            event.setCancelled(true);
         }
     }
 
@@ -70,7 +69,7 @@ public class PSWorldListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH)
     public void onPortalCreate(PortalCreateEvent event) {
-        List<BlockState> blocks = event.getBlocks();
+        ArrayList<Block> blocks = event.getBlocks();
 
         if (event.getReason().equals(PortalCreateEvent.CreateReason.FIRE)) {
             Field field = plugin.getForceFieldManager().getEnabledSourceField(blocks.get(0).getLocation(), FieldFlag.PREVENT_PORTAL_CREATION);
@@ -80,7 +79,7 @@ public class PSWorldListener implements Listener {
             }
         }
 
-        if (event.getReason().equals(PortalCreateEvent.CreateReason.NETHER_PAIR)) {
+        if (event.getReason().equals(PortalCreateEvent.CreateReason.OBC_DESTINATION)) {
             Field field = plugin.getForceFieldManager().getEnabledSourceField(blocks.get(0).getLocation(), FieldFlag.PREVENT_PORTAL_DESTINATION);
 
             if (field != null) {

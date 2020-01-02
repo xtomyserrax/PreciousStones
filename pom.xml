@@ -9,13 +9,6 @@
     <name>PreciousStones-1.14</name>
     <url>http://dev.bukkit.org/server-mods/preciousstones/</url>
 
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
     <build>
         <finalName>${project.name}</finalName>
 
@@ -80,7 +73,7 @@
                         <configuration>
                             <tasks>
                                 <taskdef resource="net/sf/antcontrib/antlib.xml"
-                                         classpathref="maven.dependency.classpath"/>
+                                         classpathref="maven.dependency.classpath" />
                                 <trycatch>
                                     <try>
                                         <copy todir="d:\Minecraft\server\plugins/">
@@ -107,13 +100,13 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.15.1-R0.1-SNAPSHOT</version>
+            <version>1.13-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.MilkBowl</groupId>
-            <artifactId>VaultAPI</artifactId>
-            <version>1.7</version>
+            <groupId>net.milkbowl.vault</groupId>
+            <artifactId>Vault</artifactId>
+            <version>1.5.6</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -163,12 +156,6 @@
             <artifactId>bukkit-permissions</artifactId>
             <version>2.3</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.bukkit</groupId>
-                    <artifactId>bukkit</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.gmail.nossr50.mcMMO</groupId>
@@ -182,24 +169,11 @@
             <version>2.0.2</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>br.net.fabiozumbi12.RedProtect</groupId>
-            <artifactId>RedProtect-Core</artifactId>
-            <version>7.6.2</version>
+            <artifactId>RedProtect</artifactId>
+            <version>7.1.1</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>br.net.fabiozumbi12.RedProtect</groupId>
-            <artifactId>RedProtect-Spigot-1.13</artifactId>
-            <version>7.6.2</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.spigotmc</groupId>
-                    <artifactId>spigot-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>ant-contrib</groupId>
@@ -225,14 +199,6 @@
             <id>elMakers</id>
             <url>http://maven.elmakers.com/repository/</url>
         </repository>
-        <repository>
-            <id>redprotect-repo</id>
-            <url>https://raw.githubusercontent.com/FabioZumbi12/RedProtect/mvn-repo/</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
     </repositories>
 
     <!-- GitHub/Jenkins -->
@@ -249,6 +215,10 @@
         <tag>PreciousStones</tag>
 
     </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <!-- Upstream Distribution -->
 
