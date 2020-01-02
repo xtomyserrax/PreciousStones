@@ -18,6 +18,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityPortalExitEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -31,13 +32,13 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * PreciousStones player listener
  *
  * @author Phaed
  */
-@SuppressWarnings("deprecation")
 public class PSPlayerListener implements Listener {
     private final PreciousStones plugin;
 
@@ -404,7 +405,7 @@ public class PSPlayerListener implements Listener {
 
             ItemStack itemInHand = player.getInventory().getItemInMainHand();
 
-            if (itemInHand != null && itemInHand.getType() != Material.AIR) {
+            if (itemInHand.getType() != Material.AIR) {
                 if (futureField.getSettings().isTeleportHoldingItem(new BlockTypeEntry(itemInHand.getType()))) {
                     if (FieldFlag.TELEPORT_IF_HOLDING_ITEMS.applies(futureField, player)) {
                         PlayerEntry entry = plugin.getPlayerManager().getPlayerEntry(player);
@@ -420,7 +421,7 @@ public class PSPlayerListener implements Listener {
 
             itemInHand = player.getInventory().getItemInMainHand();
 
-            if (itemInHand != null && itemInHand.getType() != Material.AIR) {
+            if (itemInHand.getType() != Material.AIR) {
                 if (!futureField.getSettings().isTeleportNotHoldingItem(new BlockTypeEntry(itemInHand.getType()))) {
                     if (FieldFlag.TELEPORT_IF_NOT_HOLDING_ITEMS.applies(futureField, player)) {
                         PlayerEntry entry = plugin.getPlayerManager().getPlayerEntry(player);
@@ -461,7 +462,7 @@ public class PSPlayerListener implements Listener {
         }
 
         if (entity.getType().equals(EntityType.ARMOR_STAND)) {
-            if (player != null && !plugin.getPermissionsManager().has(player, "preciousstones.bypass.armor-stand-take")) {
+            if (!plugin.getPermissionsManager().has(player, "preciousstones.bypass.armor-stand-take")) {
                 Field field = plugin.getForceFieldManager().getEnabledSourceField(entity.getLocation(), FieldFlag.PROTECT_ARMOR_STANDS);
 
                 if (field != null) {
@@ -500,7 +501,7 @@ public class PSPlayerListener implements Listener {
 
         // added for 1.9 change where the PlayerInteractEvent fires twice one for each hand
 
-        if (hand != null && !hand.equals(EquipmentSlot.HAND)){
+        if (hand != null && !hand.equals(EquipmentSlot.HAND)) {
             return;
         }
 
@@ -715,7 +716,7 @@ public class PSPlayerListener implements Listener {
 
         // -------------------------------------------------------------------------------- actions during an open cuboid
 
-        boolean hasCuboidHand = is == null || is.getType() == Material.AIR || plugin.getSettingsManager().isToolItemType(new BlockTypeEntry(is.getType())) || plugin.getSettingsManager().isFieldType(new BlockTypeEntry(is.getType()), is);
+        boolean hasCuboidHand = is.getType() == Material.AIR || plugin.getSettingsManager().isToolItemType(new BlockTypeEntry(is.getType())) || plugin.getSettingsManager().isFieldType(new BlockTypeEntry(is.getType()), is);
 
         if (hasCuboidHand) {
             if (plugin.getCuboidManager().hasOpenCuboid(player)) {
@@ -854,7 +855,7 @@ public class PSPlayerListener implements Listener {
                                 }
                             }
                         }
-                    } catch (Exception ex) {
+                    } catch (Exception ignored) {
 
                     }
                 }
@@ -869,7 +870,7 @@ public class PSPlayerListener implements Listener {
             }
 
             if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
-                if (block.getType() == Material.WALL_SIGN) // wall sign
+                if (Tag.WALL_SIGNS.isTagged(block.getType())) // wall sign
                 {
                     plugin.getSnitchManager().recordSnitchShop(player, block);
                 }
@@ -891,214 +892,209 @@ public class PSPlayerListener implements Listener {
                     plugin.getSnitchManager().recordSnitchUsed(player, block);
                 }
 
-                if (is != null) {
-                    if (plugin.getSettingsManager().isToolItemType(new BlockTypeEntry(is.getType()))) {
-                        if (plugin.getSettingsManager().isBypassBlock(block)) {
-                            return;
+                if (plugin.getSettingsManager().isToolItemType(new BlockTypeEntry(is.getType()))) {
+                    if (plugin.getSettingsManager().isBypassBlock(block)) {
+                        return;
+                    }
+
+                    // -------------------------------------------------------------------------------- right clicking on fields
+
+                    try {
+                        // makes sure water/see-through fields can be right clicked
+
+                        TargetBlock aiming = new TargetBlock(player, plugin.getSettingsManager().getMaxTargetDistance(), 0.2, new Material[]{Material.AIR});
+                        Block targetBlock = aiming.getTargetBlock();
+
+                        if (targetBlock != null && plugin.getForceFieldManager().isField(targetBlock)) {
+                            block = targetBlock;
+                        }
+                    } catch (Exception ignored) {
+
+                    }
+
+                    if (plugin.getForceFieldManager().isField(block)) {
+                        Field field = plugin.getForceFieldManager().getField(block);
+
+                        if (field.isChild()) {
+                            field = field.getParent();
                         }
 
-                        // -------------------------------------------------------------------------------- right clicking on fields
+                        // only those with permission can use fields
 
-                        try {
-                            // makes sure water/see-through fields can be right clicked
-
-                            TargetBlock aiming = new TargetBlock(player, plugin.getSettingsManager().getMaxTargetDistance(), 0.2, new Material[]{Material.AIR});
-                            Block targetBlock = aiming.getTargetBlock();
-
-                            if (targetBlock != null && plugin.getForceFieldManager().isField(targetBlock)) {
-                                block = targetBlock;
-                            }
-                        } catch (Exception ex) {
-
-                        }
-
-                        if (plugin.getForceFieldManager().isField(block)) {
-                            Field field = plugin.getForceFieldManager().getField(block);
-
-                            if (field.isChild()) {
-                                field = field.getParent();
-                            }
-
-                            // only those with permission can use fields
-
-                            if (!field.getSettings().getRequiredPermissionUse().isEmpty()) {
-                                if (!plugin.getPermissionsManager().has(player, "preciousstones.bypass.required-permission")) {
-                                    if (!plugin.getPermissionsManager().has(player, field.getSettings().getRequiredPermissionUse())) {
-                                        return;
-                                    }
+                        if (!field.getSettings().getRequiredPermissionUse().isEmpty()) {
+                            if (!plugin.getPermissionsManager().has(player, "preciousstones.bypass.required-permission")) {
+                                if (!plugin.getPermissionsManager().has(player, field.getSettings().getRequiredPermissionUse())) {
+                                    return;
                                 }
                             }
+                        }
 
-                            // -------------------------------------------------------------------------------- handle forester uses
+                        // -------------------------------------------------------------------------------- handle forester uses
 
 
-                            if (field.hasFlag(FieldFlag.FORESTER) && field.getForestingModule().hasForesterUse() && !field.getForestingModule().isForesting()) {
-                                ForesterEntry fe = new ForesterEntry(field, player);
+                        if (field.hasFlag(FieldFlag.FORESTER) && field.getForestingModule().hasForesterUse() && !field.getForestingModule().isForesting()) {
+                            ForesterEntry fe = new ForesterEntry(field, player);
+                        }
+
+                        // -------------------------------------------------------------------------------- handle changing owners
+
+                        if (field.getNewOwner() != null) {
+                            if (field.getNewOwner().equalsIgnoreCase(player.getName())) {
+                                plugin.getStorageManager().changeTranslocationOwner(field, field.getNewOwner());
+
+                                String oldOwnerName = field.getOwner();
+
+                                field.changeOwner();
+
+                                plugin.getStorageManager().offerPlayer(field.getOwner());
+                                plugin.getStorageManager().offerPlayer(oldOwnerName);
+                                plugin.getStorageManager().offerField(field);
+
+                                ChatHelper.send(player, "takenFieldOwnership", oldOwnerName);
+
+                                Player oldOwner = Bukkit.getServer().getPlayerExact(oldOwnerName);
+
+                                if (oldOwner != null) {
+                                    ChatHelper.send(oldOwner, "tookOwnership", player.getName());
+                                }
+                                return;
+                            } else {
+                                ChatHelper.send(player, "cannotTakeOwnership", field.getNewOwner());
                             }
+                        }
 
-                            // -------------------------------------------------------------------------------- handle changing owners
+                        // -------------------------------------------------------------------------------- visualize/enable on sneaking right click
 
-                            if (field.getNewOwner() != null) {
-                                if (field.getNewOwner().equalsIgnoreCase(player.getName())) {
-                                    plugin.getStorageManager().changeTranslocationOwner(field, field.getNewOwner());
-
-                                    String oldOwnerName = field.getOwner();
-
-                                    field.changeOwner();
-
-                                    plugin.getStorageManager().offerPlayer(field.getOwner());
-                                    plugin.getStorageManager().offerPlayer(oldOwnerName);
-                                    plugin.getStorageManager().offerField(field);
-
-                                    ChatHelper.send(player, "takenFieldOwnership", oldOwnerName);
-
-                                    Player oldOwner = Bukkit.getServer().getPlayerExact(oldOwnerName);
-
-                                    if (oldOwner != null) {
-                                        ChatHelper.send(oldOwner, "tookOwnership", player.getName());
-                                    }
-                                    return;
+                        if (player.isSneaking()) {
+                            if (FieldFlag.VISUALIZE_ON_SRC.applies(field, player)) {
+                                if (plugin.getCuboidManager().hasOpenCuboid(player)) {
+                                    ChatHelper.send(player, "visualizationNotWhileCuboid");
                                 } else {
-                                    ChatHelper.send(player, "cannotTakeOwnership", field.getNewOwner());
+                                    if (plugin.getPermissionsManager().has(player, "preciousstones.benefit.visualize")) {
+                                        ChatHelper.send(player, "visualizing");
+                                        plugin.getVisualizationManager().visualizeSingleField(player, field);
+                                    }
                                 }
                             }
 
-                            // -------------------------------------------------------------------------------- visualize/enable on sneaking right click
+                            if (!field.hasFlag(FieldFlag.TRANSLOCATION)) {
+                                if (FieldFlag.ENABLE_ON_SRC.applies(field, player)) {
+                                    if (field.isDisabled()) {
+                                        ChatHelper.send(player, "fieldTypeEnabled", field.getSettings().getTitle());
+                                        boolean disabled = field.setDisabled(false, player);
 
-                            if (player.isSneaking()) {
-                                if (FieldFlag.VISUALIZE_ON_SRC.applies(field, player)) {
-                                    if (plugin.getCuboidManager().hasOpenCuboid(player)) {
-                                        ChatHelper.send(player, "visualizationNotWhileCuboid");
+                                        if (!disabled) {
+                                            ChatHelper.send(player, "cannotEnable");
+                                            return;
+                                        }
+                                        field.getFlagsModule().dirtyFlags("visualize/enable on sneaking right click1");
                                     } else {
-                                        if (plugin.getPermissionsManager().has(player, "preciousstones.benefit.visualize")) {
-                                            ChatHelper.send(player, "visualizing");
-                                            plugin.getVisualizationManager().visualizeSingleField(player, field);
-                                        }
+                                        ChatHelper.send(player, "fieldTypeDisabled", field.getSettings().getTitle());
+                                        field.setDisabled(true, player);
+                                        field.getFlagsModule().dirtyFlags("visualize/enable on sneaking right click2");
                                     }
                                 }
-
-                                if (!field.hasFlag(FieldFlag.TRANSLOCATION)) {
-                                    if (FieldFlag.ENABLE_ON_SRC.applies(field, player)) {
-                                        if (field.isDisabled()) {
-                                            ChatHelper.send(player, "fieldTypeEnabled", field.getSettings().getTitle());
-                                            boolean disabled = field.setDisabled(false, player);
-
-                                            if (!disabled) {
-                                                ChatHelper.send(player, "cannotEnable");
-                                                return;
-                                            }
-                                            field.getFlagsModule().dirtyFlags("visualize/enable on sneaking right click1");
-                                        } else {
-                                            ChatHelper.send(player, "fieldTypeDisabled", field.getSettings().getTitle());
-                                            field.setDisabled(true, player);
-                                            field.getFlagsModule().dirtyFlags("visualize/enable on sneaking right click2");
-                                        }
-                                    }
-                                }
-                            } else {
-                                // -------------------------------------------------------------------------------- snitch block right click action
-
-                                if (plugin.getSettingsManager().isSnitchType(block)) {
-                                    if (plugin.getForceFieldManager().isAllowed(field, player.getName()) || plugin.getPermissionsManager().has(player, "preciousstones.admin.details")) {
-                                        if (!plugin.getCommunicationManager().showSnitchList(player, plugin.getForceFieldManager().getField(block))) {
-                                            showInfo(field, player);
-                                            ChatHelper.send(player, "noIntruders");
-                                            ChatHelper.sendBlank(player);
-                                        }
-                                        return;
-                                    }
-                                }
-
-                                // -------------------------------------------------------------------------------- grief revert right click action
-
-                                if ((field.hasFlag(FieldFlag.GRIEF_REVERT)) && (plugin.getForceFieldManager().isAllowed(block, player.getName()) || plugin.getPermissionsManager().has(player, "preciousstones.admin.undo"))) {
-                                    int size = plugin.getGriefUndoManager().undoGrief(field);
-
-                                    if (size == 0) {
-                                        showInfo(field, player);
-                                        ChatHelper.send(player, "noGriefRecorded");
-                                        ChatHelper.sendBlank(player);
-                                    }
-                                    return;
-                                }
-
-                                // -------------------------------------------------------------------------------- right click translocation
-
-                                boolean showTranslocations = false;
-
-                                if (plugin.getPermissionsManager().has(player, "preciousstones.translocation.use")) {
-                                    if (field.hasFlag(FieldFlag.TRANSLOCATION) && plugin.getForceFieldManager().isAllowed(block, player.getName())) {
-                                        if (!field.getTranslocatingModule().isTranslocating()) {
-                                            if (field.isNamed()) {
-                                                if (!field.isDisabled()) {
-                                                    if (plugin.getStorageManager().appliedTranslocationCount(field) > 0) {
-                                                        PreciousStones.debug("clearing");
-                                                        int size = plugin.getTranslocationManager().clearTranslocation(field);
-                                                        plugin.getCommunicationManager().notifyClearTranslocation(field, player, size);
-                                                        return;
-                                                    } else {
-                                                        PreciousStones.debug("disabled");
-                                                        field.setDisabled(true, player);
-                                                        field.getFlagsModule().dirtyFlags("right click translocation1");
-                                                        return;
-                                                    }
-                                                } else {
-                                                    if (plugin.getStorageManager().unappliedTranslocationCount(field) > 0) {
-                                                        PreciousStones.debug("applying");
-                                                        int size = plugin.getTranslocationManager().applyTranslocation(field);
-                                                        plugin.getCommunicationManager().notifyApplyTranslocation(field, player, size);
-                                                        return;
-                                                    } else {
-                                                        PreciousStones.debug("recording");
-                                                        boolean disabled = field.setDisabled(false, player);
-
-                                                        if (!disabled) {
-                                                            ChatHelper.send(player, "cannotEnable");
-                                                            return;
-                                                        }
-                                                        field.getFlagsModule().dirtyFlags("right click translocation2");
-                                                        return;
-                                                    }
-                                                }
-                                            } else {
-                                                showTranslocations = true;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // -------------------------------------------------------------------------------- show info right click action
-
-                                if (showInfo(field, player)) {
-                                    if (plugin.getPermissionsManager().has(player, "preciousstones.benefit.toggle")) {
-                                        if (showTranslocations) {
-                                            plugin.getCommunicationManager().notifyStoredTranslocations(player);
-                                        } else if (!field.isDisabled() && !field.hasFlag(FieldFlag.TOGGLE_ON_DISABLED)) {
-                                            ChatHelper.send(player, "usageToggle");
-                                        }
-
-                                        ChatHelper.sendBlank(player);
-                                    }
-                                }
-                            }
-                        } else if (plugin.getUnbreakableManager().isUnbreakable(block)) {
-                            // -------------------------------------------------------------------------------- unbreakable info right click
-
-                            if (plugin.getUnbreakableManager().isOwner(block, player.getName()) || plugin.getSettingsManager().isPublicBlockDetails() || plugin.getPermissionsManager().has(player, "preciousstones.admin.details")) {
-                                plugin.getCommunicationManager().showUnbreakableDetails(plugin.getUnbreakableManager().getUnbreakable(block), player);
-                            } else {
-                                plugin.getCommunicationManager().showUnbreakableDetails(player, block);
                             }
                         } else {
-                            // -------------------------------------------------------------------------------- protected surface right click action
+                            // -------------------------------------------------------------------------------- snitch block right click action
 
-                            Field field = plugin.getForceFieldManager().getEnabledSourceField(block.getLocation(), FieldFlag.ALL);
-
-                            if (field != null) {
-                                if (plugin.getForceFieldManager().isAllowed(field, player.getName()) || plugin.getSettingsManager().isPublicBlockDetails()) {
-                                    if (!plugin.getSettingsManager().isDisableGroundInfo()) {
-                                        plugin.getCommunicationManager().showProtectedLocation(player, block);
+                            if (plugin.getSettingsManager().isSnitchType(block)) {
+                                if (plugin.getForceFieldManager().isAllowed(field, player.getName()) || plugin.getPermissionsManager().has(player, "preciousstones.admin.details")) {
+                                    if (!plugin.getCommunicationManager().showSnitchList(player, plugin.getForceFieldManager().getField(block))) {
+                                        showInfo(field, player);
+                                        ChatHelper.send(player, "noIntruders");
+                                        ChatHelper.sendBlank(player);
                                     }
+                                    return;
+                                }
+                            }
+
+                            // -------------------------------------------------------------------------------- grief revert right click action
+
+                            if ((field.hasFlag(FieldFlag.GRIEF_REVERT)) && (plugin.getForceFieldManager().isAllowed(block, player.getName()) || plugin.getPermissionsManager().has(player, "preciousstones.admin.undo"))) {
+                                int size = plugin.getGriefUndoManager().undoGrief(field);
+
+                                if (size == 0) {
+                                    showInfo(field, player);
+                                    ChatHelper.send(player, "noGriefRecorded");
+                                    ChatHelper.sendBlank(player);
+                                }
+                                return;
+                            }
+
+                            // -------------------------------------------------------------------------------- right click translocation
+
+                            boolean showTranslocations = false;
+
+                            if (plugin.getPermissionsManager().has(player, "preciousstones.translocation.use")) {
+                                if (field.hasFlag(FieldFlag.TRANSLOCATION) && plugin.getForceFieldManager().isAllowed(block, player.getName())) {
+                                    if (!field.getTranslocatingModule().isTranslocating()) {
+                                        if (field.isNamed()) {
+                                            if (!field.isDisabled()) {
+                                                if (plugin.getStorageManager().appliedTranslocationCount(field) > 0) {
+                                                    PreciousStones.debug("clearing");
+                                                    int size = plugin.getTranslocationManager().clearTranslocation(field);
+                                                    plugin.getCommunicationManager().notifyClearTranslocation(field, player, size);
+                                                } else {
+                                                    PreciousStones.debug("disabled");
+                                                    field.setDisabled(true, player);
+                                                    field.getFlagsModule().dirtyFlags("right click translocation1");
+                                                }
+                                            } else {
+                                                if (plugin.getStorageManager().unappliedTranslocationCount(field) > 0) {
+                                                    PreciousStones.debug("applying");
+                                                    int size = plugin.getTranslocationManager().applyTranslocation(field);
+                                                    plugin.getCommunicationManager().notifyApplyTranslocation(field, player, size);
+                                                } else {
+                                                    PreciousStones.debug("recording");
+                                                    boolean disabled = field.setDisabled(false, player);
+
+                                                    if (!disabled) {
+                                                        ChatHelper.send(player, "cannotEnable");
+                                                        return;
+                                                    }
+                                                    field.getFlagsModule().dirtyFlags("right click translocation2");
+                                                }
+                                            }
+                                            return;
+                                        } else {
+                                            showTranslocations = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // -------------------------------------------------------------------------------- show info right click action
+
+                            if (showInfo(field, player)) {
+                                if (plugin.getPermissionsManager().has(player, "preciousstones.benefit.toggle")) {
+                                    if (showTranslocations) {
+                                        plugin.getCommunicationManager().notifyStoredTranslocations(player);
+                                    } else if (!field.isDisabled() && !field.hasFlag(FieldFlag.TOGGLE_ON_DISABLED)) {
+                                        ChatHelper.send(player, "usageToggle");
+                                    }
+
+                                    ChatHelper.sendBlank(player);
+                                }
+                            }
+                        }
+                    } else if (plugin.getUnbreakableManager().isUnbreakable(block)) {
+                        // -------------------------------------------------------------------------------- unbreakable info right click
+
+                        if (plugin.getUnbreakableManager().isOwner(block, player.getName()) || plugin.getSettingsManager().isPublicBlockDetails() || plugin.getPermissionsManager().has(player, "preciousstones.admin.details")) {
+                            plugin.getCommunicationManager().showUnbreakableDetails(Objects.requireNonNull(plugin.getUnbreakableManager().getUnbreakable(block)), player);
+                        } else {
+                            plugin.getCommunicationManager().showUnbreakableDetails(player, block);
+                        }
+                    } else {
+                        // -------------------------------------------------------------------------------- protected surface right click action
+
+                        Field field = plugin.getForceFieldManager().getEnabledSourceField(block.getLocation(), FieldFlag.ALL);
+
+                        if (field != null) {
+                            if (plugin.getForceFieldManager().isAllowed(field, player.getName()) || plugin.getSettingsManager().isPublicBlockDetails()) {
+                                if (!plugin.getSettingsManager().isDisableGroundInfo()) {
+                                    plugin.getCommunicationManager().showProtectedLocation(player, block);
                                 }
                             }
                         }
@@ -1131,10 +1127,6 @@ public class PSPlayerListener implements Listener {
         final Player player = event.getPlayer();
         final Block block = event.getBlockClicked();
         final Block liquid = block.getRelative(event.getBlockFace());
-
-        if (block == null) {
-            return;
-        }
 
         if (plugin.getSettingsManager().isBlacklistedWorld(player.getLocation().getWorld())) {
             return;
@@ -1458,24 +1450,27 @@ public class PSPlayerListener implements Listener {
      * @param event
      */
     @EventHandler(priority = EventPriority.HIGH)
-    public void onItemPickup(PlayerPickupItemEvent event) {
+    public void onItemPickup(EntityPickupItemEvent event) {
         if (event.isCancelled()) {
             return;
         }
 
-        Player player = event.getPlayer();
-        Field field = plugin.getForceFieldManager().getEnabledSourceField(player.getLocation(), FieldFlag.UNUSABLE_ITEMS);
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
+            Field field = plugin.getForceFieldManager().getEnabledSourceField(player.getLocation(), FieldFlag.UNUSABLE_ITEMS);
 
-        if (field != null) {
-            if (FieldFlag.UNUSABLE_ITEMS.applies(field, player)) {
-                if (player.getInventory().getItemInMainHand().getType() == event.getItem().getItemStack().getType()) {
-                    if (field.getSettings().isUnusableItem(event.getItem().getItemStack().getType())) {
-                        ChatHelper.send(player, "cannotUseItemHere");
-                        StackHelper.unHoldItem(player, player.getInventory().getHeldItemSlot());
+            if (field != null) {
+                if (FieldFlag.UNUSABLE_ITEMS.applies(field, player)) {
+                    if (player.getInventory().getItemInMainHand().getType() == event.getItem().getItemStack().getType()) {
+                        if (field.getSettings().isUnusableItem(event.getItem().getItemStack().getType())) {
+                            ChatHelper.send(player, "cannotUseItemHere");
+                            StackHelper.unHoldItem(player, player.getInventory().getHeldItemSlot());
+                        }
                     }
                 }
             }
         }
+
     }
 
     /**

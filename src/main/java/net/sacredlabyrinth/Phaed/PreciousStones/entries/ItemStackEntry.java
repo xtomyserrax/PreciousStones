@@ -1,6 +1,7 @@
 package net.sacredlabyrinth.Phaed.PreciousStones.entries;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.json.simple.JSONObject;
@@ -14,7 +15,6 @@ import java.util.Map.Entry;
  */
 public class ItemStackEntry {
     private final Material type;
-    private final short durability;
     private final int amount;
     private Map<Enchantment, Integer> enchantments = new HashMap<>();
 
@@ -23,7 +23,6 @@ public class ItemStackEntry {
      */
     public ItemStackEntry(ItemStack item) {
         this.type = item.getType();
-        this.durability = item.getDurability();
         this.enchantments = item.getEnchantments();
         this.amount = item.getAmount();
     }
@@ -34,32 +33,30 @@ public class ItemStackEntry {
     @SuppressWarnings("deprecation")
     public ItemStackEntry(JSONObject o) {
         this.type = Material.valueOf(o.get("type").toString());
-        this.durability = Short.parseShort(o.get("dmg").toString());
         this.amount = Integer.parseInt(o.get("a").toString());
 
         JSONObject ench = (JSONObject) o.get("e");
 
         if (ench != null) {
-            for (Object enchId : ench.keySet()) {
-                Integer level = Integer.parseInt(ench.get(enchId).toString());
-                this.enchantments.put(Enchantment.getByName(enchId.toString()), level);
+            for (Object enchKey : ench.keySet()) {
+                String key = (String) enchKey;
+                Integer level = Integer.parseInt(ench.get(key).toString());
+                this.enchantments.put(Enchantment.getByKey(NamespacedKey.minecraft(key)), level);
             }
         }
     }
 
-    @SuppressWarnings("deprecation")
     public JSONObject serialize() {
         JSONObject ench = new JSONObject();
 
         for (Enchantment e : enchantments.keySet()) {
             Integer integer = enchantments.get(e);
-            ench.put(e.getName(), integer);
+            ench.put(e.getKey().getKey(), integer);
         }
 
         JSONObject out = new JSONObject();
 
         out.put("type", getType().name());
-        out.put("dmg", getDurability());
         out.put("a", getAmount());
         out.put("e", ench);
 
@@ -71,10 +68,6 @@ public class ItemStackEntry {
      */
     public Material getType() {
         return type;
-    }
-
-    public short getDurability() {
-        return durability;
     }
 
     public int getAmount() {
@@ -108,7 +101,7 @@ public class ItemStackEntry {
      * @return
      */
     public ItemStack toItemStack() {
-        ItemStack is = new ItemStack(getType(), getAmount(), getDurability());
+        ItemStack is = new ItemStack(getType(), getAmount());
 
         for (Entry<Enchantment, Integer> ench : enchantments.entrySet()) {
             is.addUnsafeEnchantment(ench.getKey(), Math.min(ench.getValue(), ench.getKey().getMaxLevel()));
@@ -119,11 +112,7 @@ public class ItemStackEntry {
 
     @Override
     public String toString() {
-        if (getDurability() == 0) {
-            return getType().name();
-        }
-
-        return getType().name() + ":" + getDurability();
+        return getType().name();
     }
 }
 
