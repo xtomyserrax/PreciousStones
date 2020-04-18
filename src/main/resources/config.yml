@@ -22,6 +22,7 @@ force-field-blocks:
   prevent-flow: true
   protect-crops: true
   protect-inventories: true
+  ?allowed-can-break: true
   ?welcome-message: true
   ?farewell-message: true
   ?prevent-portal-enter: true
@@ -102,6 +103,7 @@ force-field-blocks:
   prevent-flow: true
   ?prevent-teleport: true
   protect-crops: true
+  ?allowed-can-break: true
   ?welcome-message: true
   ?farewell-message: true
   can-change-owner: true
