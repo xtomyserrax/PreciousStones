@@ -5,10 +5,12 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import com.sk89q.worldedit.EditSession.Stage;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.event.extent.EditSessionEvent;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extent.AbstractDelegateExtent;
@@ -102,5 +104,9 @@ public class WorldEditListener {
 			
             return super.setBlock(l, block);
 		}
+	}
+
+	public static void register(JavaPlugin owningPlugin) {
+		owningPlugin.getPlugin(WorldEditPlugin.class).getWorldEdit().getEventBus().register(new WorldEditListener());
 	}
 }

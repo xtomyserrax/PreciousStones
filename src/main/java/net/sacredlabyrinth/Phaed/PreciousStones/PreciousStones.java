@@ -8,8 +8,6 @@ import net.sacredlabyrinth.Phaed.PreciousStones.managers.*;
 import net.sacredlabyrinth.Phaed.PreciousStones.uuid.UUIDMigration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -187,7 +185,7 @@ public class PreciousStones extends JavaPlugin {
         getServer().getPluginManager().registerEvents(inventoryListener, this);
 
         if (permissionsManager.hasWorldEdit() && !settingsManager.isDisableWorldEditHook()) {
-            getPlugin(WorldEditPlugin.class).getWorldEdit().getEventBus().register(new WorldEditListener());
+            WorldEditListener.register(this);
         }
         if (permissionsManager.hasMcMMO()) {
             getServer().getPluginManager().registerEvents(mcmmoListener, this);
