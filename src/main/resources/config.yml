@@ -20,6 +20,7 @@ force-field-blocks:
   prevent-item-frame-take: true
   protect-armor-stands: true
   prevent-flow: true
+  prevent-spawn-egg: true
   protect-crops: true
   protect-inventories: true
   ?allowed-can-break: true
@@ -66,6 +67,15 @@ force-field-blocks:
   - jungle_fence_gate
   - acacia_fence_gate
   - dark_oak_fence_gate
+  - oak_trapdoor
+  - spruce_trapdoor
+  - birch_trapdoor
+  - jungle_trapdoor
+  - acacia_trapdoor
+  - dark_oak_trapdoor
+  - iron_trapdoor
+  - repeater
+  - comparator
   - chest
   - trapped_chest
   - anvil
@@ -101,6 +111,7 @@ force-field-blocks:
   prevent-unprotectable: true
   protect-inventories: true
   prevent-flow: true
+  prevent-spawn-egg: true
   ?prevent-teleport: true
   protect-crops: true
   ?allowed-can-break: true
@@ -318,7 +329,7 @@ force-field-blocks:
   meta-name: '&eGodStone'
   meta-autoset: true
   meta-lore:
-  - '&fHeal, feed, repair, neutralize portions'
+  - '&fHeal, feed, repair, neutralize potions'
   - '&fIt covers an area of 5 radius'
   - '&fWorks for only players allowed'
   heal: 4

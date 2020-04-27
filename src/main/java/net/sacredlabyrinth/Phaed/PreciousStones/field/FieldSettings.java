@@ -236,6 +236,7 @@ public class FieldSettings {
         loadBoolean("prevent-mob-damage");
         loadBoolean("prevent-mob-spawn");
         loadBoolean("prevent-animal-spawn");
+        loadBoolean("prevent-spawn-egg");
         loadBoolean("prevent-entry");
         loadBoolean("prevent-unprotectable");
         loadBoolean("prevent-potion-splash");

@@ -19,8 +19,10 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -288,6 +290,20 @@ public final class ForceFieldManager {
         // saves the field on the database
 
         plugin.getStorageManager().offerField(field);
+        
+        // remove players inside field if it has PREVENT_ENTRY and they are not allowed
+        
+        if (field.hasFlag(FieldFlag.PREVENT_ENTRY)) {
+			for (Entity en : player.getNearbyEntities(field.getRadius()+5, field.getHeight()+5, field.getRadius()+5)) {
+				if (en instanceof Player) {
+					Player near = (Player) en;
+					if (!this.plugin.getPermissionsManager().has(near, "preciousstones.bypass.entry") && field.containsPlayer(near.getName()) && FieldFlag.PREVENT_ENTRY.applies(field, near)) {
+						near.teleport(this.plugin.getPlayerManager().getOutsideFieldLocation(field, near), PlayerTeleportEvent.TeleportCause.PLUGIN);
+						this.plugin.getCommunicationManager().warnEntry(near, field);
+					}
+				}
+			}
+		}
     }
 
     public void addToRenterCollection(Field field) {
