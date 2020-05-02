@@ -28,7 +28,7 @@ force-field-blocks:
   ?farewell-message: true
   ?prevent-portal-enter: true
   ?prevent-portal-destination: true
-  ?prevent-portal-create: true
+  ?prevent-portal-creation: true
   ?prevent-vehicle-enter: true
   ?prevent-vehicle-exit: true
   ?prevent-teleport: true
