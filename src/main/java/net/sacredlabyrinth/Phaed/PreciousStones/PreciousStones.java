@@ -6,6 +6,8 @@ import net.sacredlabyrinth.Phaed.PreciousStones.helpers.ChatHelper;
 import net.sacredlabyrinth.Phaed.PreciousStones.listeners.*;
 import net.sacredlabyrinth.Phaed.PreciousStones.managers.*;
 import net.sacredlabyrinth.Phaed.PreciousStones.uuid.UUIDMigration;
+
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -203,6 +205,7 @@ public class PreciousStones extends JavaPlugin {
     public void onDisable() {
         PreciousStones.log("Shutting Down: Cancelling all tasks...");
         getServer().getScheduler().cancelTasks(this);
+        HandlerList.unregisterAll(this);
 
         PreciousStones.log("Shutting Down: Saving all pending data...");
         getForceFieldManager().offerAllDirtyFields();
