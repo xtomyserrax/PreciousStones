@@ -7,7 +7,6 @@ import net.sacredlabyrinth.Phaed.PreciousStones.field.Field;
 import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldFlag;
 import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldSettings;
 import net.sacredlabyrinth.Phaed.PreciousStones.helpers.Helper;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -131,6 +130,7 @@ public final class SettingsManager {
     private boolean disableWorldEditHook;
     private boolean offByDefault;
     private boolean useIdInSnitches;
+    private boolean usePermissionBasedLimits;
     private int fenceMaxDepth;
     private Material[] throughFields = new Material[]{Material.AIR, Material.OAK_SAPLING, Material.WATER, Material.LAVA, 
     		Material.DEAD_BUSH, Material.DANDELION, Material.POPPY, Material.BROWN_MUSHROOM, Material.RED_MUSHROOM, Material.TORCH, Material.SOUL_TORCH, Material.REDSTONE_TORCH, 
@@ -293,6 +293,7 @@ public final class SettingsManager {
         disablePlaceWhileCreative = loadBoolean("settings.disable-field-place-while-creative");
         disableBreakWhileCreative = loadBoolean("settings.disable-field-break-while-creative");
         preventBreakingHidden = loadBoolean("settings.prevent-breaking-hidden");
+        usePermissionBasedLimits = loadBoolean("settings.use-permission-based-limits");
 
         // ********************************** Cuboid
 
@@ -567,6 +568,8 @@ public final class SettingsManager {
         		block.getType().equals(Material.JUKEBOX) ||
         		block.getType().equals(Material.LEVER) ||
                 block.getType().equals(Material.REPEATER) ||
+                block.getType().equals(Material.DAYLIGHT_DETECTOR) ||
+                block.getType().equals(Material.NOTE_BLOCK) ||
                 isAButton(block.getType()) ||
                 isAPressurePlate(block.getType());
     }
@@ -1684,4 +1687,9 @@ public final class SettingsManager {
     public boolean isPreventBreakingHidden() {
         return preventBreakingHidden;
     }
+
+    /**
+     * @return the usePermissionBasedLimits
+     */
+    public boolean isUsePermissionBasedLimits() { return usePermissionBasedLimits; }
 }
