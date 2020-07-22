@@ -16,6 +16,8 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
+import io.papermc.lib.PaperLib;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,61 +108,60 @@ public class TeleportationManager {
                 currentPosition = new Vec(player.getLocation());
             }
 
-            // prepare teleport destination
+            // prepare teleport destination and teleport
 
-            World world = destination.getWorld();
+            final Vec finalCurrentPosition = currentPosition;
+            PaperLib.getChunkAtAsync(destination.clone()).thenAccept((ignoreChunk) -> {
+            	World world = destination.getWorld();
 
-            Vec safe = findSafeLocation(destination);
-            double x = safe.getX() + .5D;
-            double y = safe.getY();
-            double z = safe.getZ() + .5D;
+                Vec safe = findSafeLocation(destination);
+                double x = safe.getX() + .5D;
+                double y = safe.getY();
+                double z = safe.getZ() + .5D;
 
-            if (y == -1) {
-                continue;
-            }
-
-            if (!world.isChunkLoaded(destination.getBlockX() >> 4, destination.getBlockZ() >> 4)) {
-                world.loadChunk(destination.getBlockX() >> 4, destination.getBlockZ() >> 4);
-            }
-
-            Location loc = new Location(world, x, y, z, entity.getLocation().getYaw(), entity.getLocation().getPitch());
-
-            // teleport the player
-
-            if (sourceField.hasFlag(FieldFlag.TELEPORT_EXPLOSION_EFFECT)) {
-                world.createExplosion(entity.getLocation(), -1);
-            }
-
-            entity.teleport(loc);
-
-            if (sourceField.hasFlag(FieldFlag.TELEPORT_EXPLOSION_EFFECT)) {
-                world.createExplosion(loc, -1);
-            }
-
-            if (entity instanceof Player) {
-                Player player = (Player) entity;
-
-                if (sourceField.hasFlag(FieldFlag.TELEPORT_ANNOUNCE)) {
-                    if (!entry.getAnnounce().isEmpty()) {
-                        ChatHelper.send(player, entry.getAnnounce());
-                    }
+                if (y == -1) {
+                    return;
                 }
 
-                // start teleport back countdown
+                Location loc = new Location(world, x, y, z, entity.getLocation().getYaw(), entity.getLocation().getPitch());
 
-                if (sourceField.getSettings().getTeleportBackAfterSeconds() > 0) {
-                    if (sourceField.hasFlag(FieldFlag.TELEPORT_ANNOUNCE)) {
-                        ChatHelper.send(player, "teleportAnnounceBack", sourceField.getSettings().getTeleportBackAfterSeconds());
+                // teleport the player
+
+                if (sourceField.hasFlag(FieldFlag.TELEPORT_EXPLOSION_EFFECT)) {
+                    world.createExplosion(entity.getLocation(), -1);
+                }
+
+                PaperLib.teleportAsync(entity, loc.clone()).thenRun(() -> {
+                    if (sourceField.hasFlag(FieldFlag.TELEPORT_EXPLOSION_EFFECT)) {
+                        world.createExplosion(loc, -1);
                     }
 
-                    PlayerEntry playerEntry = plugin.getPlayerManager().getPlayerEntry(player);
+                    if (entity instanceof Player) {
+                        Player player = (Player) entity;
 
-                    playerEntry.setTeleportSecondsRemaining(sourceField.getSettings().getTeleportBackAfterSeconds());
-                    playerEntry.setTeleportVec(currentPosition);
-                    playerEntry.startTeleportCountDown();
-                    plugin.getStorageManager().offerPlayer(player.getName());
-                }
-            }
+                        if (sourceField.hasFlag(FieldFlag.TELEPORT_ANNOUNCE)) {
+                            if (!entry.getAnnounce().isEmpty()) {
+                                ChatHelper.send(player, entry.getAnnounce());
+                            }
+                        }
+
+                        // start teleport back countdown
+
+                        if (sourceField.getSettings().getTeleportBackAfterSeconds() > 0) {
+                            if (sourceField.hasFlag(FieldFlag.TELEPORT_ANNOUNCE)) {
+                                ChatHelper.send(player, "teleportAnnounceBack", sourceField.getSettings().getTeleportBackAfterSeconds());
+                            }
+
+                            PlayerEntry playerEntry = plugin.getPlayerManager().getPlayerEntry(player);
+
+                            playerEntry.setTeleportSecondsRemaining(sourceField.getSettings().getTeleportBackAfterSeconds());
+                            playerEntry.setTeleportVec(finalCurrentPosition);
+                            playerEntry.startTeleportCountDown();
+                            plugin.getStorageManager().offerPlayer(player.getName());
+                        }
+                    }
+                });
+            });
         }
 
         return true;
@@ -179,10 +180,6 @@ public class TeleportationManager {
 
         if (y == -1) {
             return;
-        }
-
-        if (!world.isChunkLoaded(destination.getBlockX() >> 4, destination.getBlockZ() >> 4)) {
-            world.loadChunk(destination.getBlockX() >> 4, destination.getBlockZ() >> 4);
         }
 
         Location loc = new Location(world, x, y, z, destination.getYaw(), destination.getPitch());
