@@ -1273,7 +1273,7 @@ public class PSPlayerListener implements Listener {
 		}
 
 		final Player player = event.getPlayer();
-		final Block block = event.getBlockClicked();
+		final Block block = event.getBlock();
 		final Block liquid = block.getRelative(event.getBlockFace());
 
 		Material mat = event.getBucket();
