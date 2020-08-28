@@ -27,8 +27,6 @@ public class SQLiteCore2 extends AbstractDBCore {
         File file = new File(dbFolder.getAbsolutePath() + File.separator + dbName + ".db");
         HikariConfig hikariConf = new HikariConfig();
         hikariConf.setJdbcUrl("jdbc:sqlite:" + file.getAbsolutePath());
-        hikariConf.setUsername("SA");
-        hikariConf.setPassword("");
         setPoolDetails(hikariConf);
         dataSource = new HikariDataSource(hikariConf);
     }
