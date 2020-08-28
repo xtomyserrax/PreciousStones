@@ -13,12 +13,7 @@ public interface DBCore {
     Connection getConnection();
 
     /**
-     * @return whether connection can be established
-     */
-    Boolean checkConnection();
-
-    /**
-     * Close connection
+     * Close connection pool
      */
     void close();
 
