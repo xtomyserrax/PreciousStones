@@ -1,4 +1,4 @@
-package net.sacredlabyrinth.Phaed.PreciousStones.managers;
+package net.sacredlabyrinth.Phaed.PreciousStones.storage;
 
 import net.sacredlabyrinth.Phaed.PreciousStones.DirtyFieldReason;
 import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
@@ -14,9 +14,6 @@ import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldFlag;
 import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldSettings;
 import net.sacredlabyrinth.Phaed.PreciousStones.helpers.ChatHelper;
 import net.sacredlabyrinth.Phaed.PreciousStones.helpers.Helper;
-import net.sacredlabyrinth.Phaed.PreciousStones.storage.DBCore;
-import net.sacredlabyrinth.Phaed.PreciousStones.storage.MySQLCore;
-import net.sacredlabyrinth.Phaed.PreciousStones.storage.SQLiteCore;
 import net.sacredlabyrinth.Phaed.PreciousStones.uuid.UUIDMigration;
 import net.sacredlabyrinth.Phaed.PreciousStones.vectors.Vec;
 import org.bukkit.Bukkit;
