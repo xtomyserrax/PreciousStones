@@ -61,8 +61,8 @@ public class PSWorldListener implements Listener {
             return;
         }
 
-        plugin.getStorageManager().loadWorldFields(world);
-        plugin.getStorageManager().loadWorldUnbreakables(world);
+        plugin.getStorageManager().loadWorldFields(world.getName());
+        plugin.getStorageManager().loadWorldUnbreakables(world.getName());
     }
 
     /**

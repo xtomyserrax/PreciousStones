@@ -455,14 +455,21 @@ public class Helper {
     /**
      * Escapes single quotes
      *
-     * @param str
-     * @return
+     * @param str input string
+     * @return string with quotes escaped
+     * @deprecated This method was previously used to 'prevent' SQL injection, but this is not the proper way
+     * to do so. Use {@link java.sql.PreparedStatement} instead
      */
-    public static String escapeQuotes(String str) {
+    @Deprecated
+    public static String escapeQuotesTrue(String str) {
         if (str == null) {
             return "";
         }
         return str.replace("'", "''");
+    }
+    
+    public static String escapeQuotes(String str) {
+        return escapeQuotesTrue(str);
     }
 
     /**

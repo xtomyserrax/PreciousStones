@@ -16,6 +16,8 @@ public class SQLiteCore2 extends AbstractDBCore {
      * @param dbLocation
      */
     public SQLiteCore2(String dbName, String dbLocation) {
+        super(VendorType.SQLITE);
+
         File dbFolder = new File(dbLocation);
 
         if (dbName.contains("/") || dbName.contains("\\") || dbName.endsWith(".db")) {
@@ -27,13 +29,19 @@ public class SQLiteCore2 extends AbstractDBCore {
         File file = new File(dbFolder.getAbsolutePath() + File.separator + dbName + ".db");
         HikariConfig hikariConf = new HikariConfig();
         hikariConf.setJdbcUrl("jdbc:sqlite:" + file.getAbsolutePath());
-        setPoolDetails(hikariConf);
+        setExtraPoolDetails(hikariConf);
         dataSource = new HikariDataSource(hikariConf);
     }
     
     @Override
     HikariDataSource getDataSource() {
         return dataSource;
+    }
+    
+    @Override
+    public String getDataType(String table, String column) {
+        // not supported
+        return "";
     }
 
 }

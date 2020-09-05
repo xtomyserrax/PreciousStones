@@ -2,19 +2,32 @@ package net.sacredlabyrinth.Phaed.PreciousStones.storage;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * @author phaed
  */
-public interface DBCore {
+public interface DBCore extends AutoCloseable {
+    
     /**
-     * @return connection
+     * Acquires an open connection
+     * 
+     * @return an open connection, which should be closed when done with
+     * @throws SQLException per JDBC
      */
-    Connection getConnection();
+    Connection getConnection() throws SQLException;
+    
+    /**
+     * Gets the vendor used
+     * 
+     * @return the vendor type
+     */
+    VendorType getVendorType();
 
     /**
      * Close connection pool
      */
+    @Override
     void close();
 
     /**

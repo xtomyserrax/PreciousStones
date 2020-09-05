@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
@@ -12,52 +13,89 @@ import javax.sql.rowset.RowSetProvider;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-abstract class AbstractDBCore {
+import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
+
+abstract class AbstractDBCore implements DBCore {
     
-    private RowSetFactory cacheFactory;
+    private final VendorType vendorType;
     
-    AbstractDBCore() {
-        
+    AbstractDBCore(VendorType vendorType) {
+        this.vendorType = vendorType;
     }
     
-    static void setPoolDetails(HikariConfig hikariConf) {
+    static void setExtraPoolDetails(HikariConfig hikariConf) {
         hikariConf.setMinimumIdle(2);
         hikariConf.setMaximumPoolSize(2);
     }
     
     abstract HikariDataSource getDataSource();
     
+    @Override
     public Connection getConnection() throws SQLException {
         return getDataSource().getConnection();
     }
     
+    @Override
+    public VendorType getVendorType() {
+        return vendorType;
+    }
+    
+    @Override
     public void close() {
         getDataSource().close();
     }
     
-    private synchronized CachedRowSet createCachedRowSet() throws SQLException {
-        if (cacheFactory == null) {
-            cacheFactory = RowSetProvider.newFactory();
-        }
-        return cacheFactory.createCachedRowSet();
-    }
+    /*
+     * Here temporarily
+     */
     
-    private void setArguments(PreparedStatement prepStmt, Object[] args) throws SQLException {
-        for (int n = 0; n < args.length; n++) {
-            int index = n + 1; // JDBC indexes start at 1
-            prepStmt.setObject(index, args[n]);
-        }
+    @Override
+    public ResultSet select(String query) {
+        return null;
     }
-    
-    public ResultSet select(String query, Object...args) throws SQLException {
-        try (Connection conn = getConnection(); PreparedStatement prepStmt = conn.prepareStatement(query)) {
-            setArguments(prepStmt, args);
-            try (ResultSet resultSet = prepStmt.executeQuery()) {
-                CachedRowSet cached = createCachedRowSet();
-                cached.populate(resultSet);
-                return cached;
-            }
+
+    @Override
+    public long insert(String query) {
+        return 0;
+    }
+
+    @Override
+    public void update(String query) {
+    }
+
+    @Override
+    public void delete(String query) {
+    }
+
+    @Override
+    public Boolean execute(String query) {
+        return null;
+    }
+
+    @Override
+    public Boolean existsTable(String table) {
+        try (Connection conn = getConnection();
+                ResultSet tables = conn.getMetaData().getTables(null, null, table, null)) {
+
+            return tables.next();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
+        return false;
+    }
+
+    @Override
+    public Boolean existsColumn(String table, String column) {
+        try (Connection conn = getConnection();
+                ResultSet columns = conn.getMetaData().getColumns(null, null, table, column)) {
+
+            return columns.next();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return false;
     }
     
 }
