@@ -27,8 +27,12 @@ final class SqlUtils {
     }
     
     static void setFieldNameAndOwner(PreparedStatement prepStmt, Field field) throws SQLException {
-        prepStmt.setString(1, field.getName());
-        prepStmt.setString(2, field.getOwner());
+        setFieldNameAndOwner(prepStmt, field, 0);
+    }
+    
+    static void setFieldNameAndOwner(PreparedStatement prepStmt, Field field, int offset) throws SQLException {
+        prepStmt.setString(offset + 1, field.getName());
+        prepStmt.setString(offset + 2, field.getOwner());
     }
     
 }
