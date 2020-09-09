@@ -1,19 +1,11 @@
 package net.sacredlabyrinth.Phaed.PreciousStones.storage;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-
-import javax.sql.rowset.CachedRowSet;
-import javax.sql.rowset.RowSetFactory;
-import javax.sql.rowset.RowSetProvider;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
-import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
 
 abstract class AbstractDBCore implements DBCore {
     
