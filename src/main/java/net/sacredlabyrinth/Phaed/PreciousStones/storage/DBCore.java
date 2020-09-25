@@ -73,7 +73,7 @@ public interface DBCore extends AutoCloseable {
      * @param table
      * @return
      */
-    Boolean existsTable(String table);
+    boolean existsTable(String table);
 
     /**
      * Check whether a column exists
@@ -82,7 +82,7 @@ public interface DBCore extends AutoCloseable {
      * @param column
      * @return
      */
-    Boolean existsColumn(String table, String column);
+    boolean existsColumn(String table, String column);
 
     /**
      * CGEt the datatype of a column

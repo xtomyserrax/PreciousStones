@@ -8,7 +8,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
 
-public class MySQLCore2 extends AbstractDBCore {
+class MySQLCore2 extends AbstractDBCore {
 
     private final HikariDataSource dataSource;
     
@@ -20,7 +20,7 @@ public class MySQLCore2 extends AbstractDBCore {
      * @param username username
      * @param password password
      */
-    public MySQLCore2(String host, int port, String database, String username, String password) {
+    MySQLCore2(String host, int port, String database, String username, String password) {
         super(VendorType.MYSQL);
         HikariConfig hikariConf = new HikariConfig();
         hikariConf.setJdbcUrl("jdbc:mysql://" + host + ':' + port + '/' + database + "?useUnicode=true&characterEncoding=utf-8");

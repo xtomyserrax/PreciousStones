@@ -65,7 +65,7 @@ abstract class AbstractDBCore implements DBCore {
     }
 
     @Override
-    public Boolean existsTable(String table) {
+    public boolean existsTable(String table) {
         try (Connection conn = getConnection();
                 ResultSet tables = conn.getMetaData().getTables(null, null, table, null)) {
 
@@ -78,7 +78,7 @@ abstract class AbstractDBCore implements DBCore {
     }
 
     @Override
-    public Boolean existsColumn(String table, String column) {
+    public boolean existsColumn(String table, String column) {
         try (Connection conn = getConnection();
                 ResultSet columns = conn.getMetaData().getColumns(null, null, table, column)) {
 

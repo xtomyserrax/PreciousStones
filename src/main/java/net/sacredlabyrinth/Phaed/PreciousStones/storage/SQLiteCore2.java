@@ -5,7 +5,7 @@ import java.io.File;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-public class SQLiteCore2 extends AbstractDBCore {
+class SQLiteCore2 extends AbstractDBCore {
 
     private final HikariDataSource dataSource;
     
@@ -15,7 +15,7 @@ public class SQLiteCore2 extends AbstractDBCore {
      * @param dbName
      * @param dbLocation
      */
-    public SQLiteCore2(String dbName, String dbLocation) {
+    SQLiteCore2(String dbName, String dbLocation) {
         super(VendorType.SQLITE);
 
         File dbFolder = new File(dbLocation);

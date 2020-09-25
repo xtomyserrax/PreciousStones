@@ -14,6 +14,7 @@ import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldFlag;
 import net.sacredlabyrinth.Phaed.PreciousStones.field.FieldSettings;
 import net.sacredlabyrinth.Phaed.PreciousStones.helpers.ChatHelper;
 import net.sacredlabyrinth.Phaed.PreciousStones.helpers.Helper;
+import net.sacredlabyrinth.Phaed.PreciousStones.managers.SettingsManager;
 import net.sacredlabyrinth.Phaed.PreciousStones.uuid.UUIDMigration;
 import net.sacredlabyrinth.Phaed.PreciousStones.vectors.Vec;
 import org.bukkit.Bukkit;
@@ -43,8 +44,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -56,7 +55,7 @@ public class StorageManager {
     /**
      *
      */
-    private DBCore core;
+    private final DBCore core;
     private PreciousStones plugin;
     private final Map<Vec, Field> pending = new HashMap<>();
     private final Set<Field> pendingGrief = new HashSet<>();
@@ -71,159 +70,35 @@ public class StorageManager {
     public StorageManager() {
         plugin = PreciousStones.getInstance();
 
-        initiateDB();
+        try {
+            core = initiateDB();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Unable to initialise database", ex);
+        }
         loadWorldData();
         saverScheduler();
         purgePlayers();
     }
 
-    private void initiateDB() {
-        if (plugin.getSettingsManager().isUseMysql()) {
-            core = new MySQLCore2(plugin.getSettingsManager().getHost(), plugin.getSettingsManager().getPort(), plugin.getSettingsManager().getDatabase(), plugin.getSettingsManager().getUsername(), plugin.getSettingsManager().getPassword());
+    private DBCore initiateDB() throws SQLException {
+        DBCore core;
+
+        SettingsManager settings = plugin.getSettingsManager();
+        boolean isMySql = settings.isUseMysql();
+        if (isMySql) {
+            core = new MySQLCore2(
+                    settings.getHost(), settings.getPort(), settings.getDatabase(),
+                    settings.getUsername(), settings.getPassword());
+        } else {
+            core = new SQLiteCore2("PreciousStones", plugin.getDataFolder().getPath());
+        }
+        try (TableCreator creator = new TableCreator(core)) {
+            creator.createTables();
+        }
+
+        if (isMySql) {
 
             PreciousStones.log("dbMysqlConnected");
-
-            if (!core.existsTable("pstone_cuboids")) {
-                PreciousStones.log("Creating table: pstone_cuboids");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_cuboids` ("
-                        + "`id` bigint(20) NOT NULL auto_increment, "
-                        + "`parent` bigint(20) NOT NULL, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`minx` int(11) default NULL, "
-                        + "`maxx` int(11) default NULL, "
-                        + "`miny` int(11) default NULL, "
-                        + "`maxy` int(11) default NULL, "
-                        + "`minz` int(11) default NULL, "
-                        + "`maxz` int(11) default NULL, "
-                        + "`velocity` float default NULL, "
-                        + "`type_id` int(11) default NULL, "
-                        + "`data` tinyint default 0, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`name` varchar(50) NOT NULL, "
-                        + "`packed_allowed` text NOT NULL, "
-                        + "`last_used` bigint(20) Default NULL, "
-                        + "`flags` TEXT NOT NULL, "
-                        + "PRIMARY KEY (`id`), "
-                        + "UNIQUE KEY `uq_cuboid_fields_1` (`x`,`y`,`z`,`world`))");
-            }
-
-            if (!core.existsTable("pstone_fields")) {
-                PreciousStones.log("Creating table: pstone_fields");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_fields` ("
-                        + "`id` bigint(20) NOT NULL auto_increment, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`radius` int(11) default NULL, "
-                        + "`height` int(11) default NULL, "
-                        + "`velocity` float default NULL, "
-                        + "`type_id` int(11) default NULL, "
-                        + "`data` tinyint default 0, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`name` varchar(50) NOT NULL, "
-                        + "`packed_allowed` text NOT NULL, "
-                        + "`last_used` bigint(20) Default NULL, "
-                        + "`flags` TEXT NOT NULL, "
-                        + "PRIMARY KEY (`id`), "
-                        + "UNIQUE KEY `uq_pstone_fields_1` (`x`,`y`,`z`,`world`))");
-            }
-
-            if (!core.existsTable("pstone_unbreakables")) {
-                PreciousStones.log("Creating table: pstone_unbreakables");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_unbreakables` ("
-                        + "`id` bigint(20) NOT NULL auto_increment, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`type_id` int(11) default NULL, "
-                        + "`data` tinyint default 0, "
-                        + "PRIMARY KEY (`id`), "
-                        + "UNIQUE KEY `uq_pstone_unbreakables_1` (`x`,`y`,`z`,`world`))");
-            }
-
-            if (!core.existsTable("pstone_grief_undo")) {
-                PreciousStones.log("Creating table: pstone_grief_undo");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_grief_undo` ("
-                        + "`id` bigint(20) NOT NULL auto_increment, "
-                        + "`date_griefed` bigint(20), "
-                        + "`field_x` int(11) default NULL, "
-                        + "`field_y` int(11) default NULL, "
-                        + "`field_z` int(11) default NULL, "
-                        + "`world` varchar(25) NOT NULL, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`type_id` int(11) NOT NULL, "
-                        + "`data` TINYINT NOT NULL, "
-                        + "`sign_text` varchar(75) NOT NULL, "
-                        + "PRIMARY KEY  (`id`))");
-            }
-
-            if (!core.existsTable("pstone_translocations")) {
-                PreciousStones.log("Creating table: pstone_translocations");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_translocations` ("
-                        + "`id` bigint(20) NOT NULL auto_increment, "
-                        + "`name` varchar(36) NOT NULL, "
-                        + "`player_name` varchar(16) NOT NULL, "
-                        + "`minx` int(11) default NULL, "
-                        + "`maxx` int(11) default NULL, "
-                        + "`miny` int(11) default NULL, "
-                        + "`maxy` int(11) default NULL, "
-                        + "`minz` int(11) default NULL, "
-                        + "`maxz` int(11) default NULL, "
-                        + "PRIMARY KEY (`id`), "
-                        + "UNIQUE KEY `uq_trans_1` (`name`,`player_name`))");
-            }
-
-            if (!core.existsTable("pstone_storedblocks")) {
-                PreciousStones.log("Creating table: pstone_storedblocks");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_storedblocks` ("
-                        + "`id` bigint(20) NOT NULL auto_increment, "
-                        + "`name` varchar(36) NOT NULL, "
-                        + "`player_name` varchar(16) NOT NULL, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) NOT NULL, "
-                        + "`type_id` int(11) NOT NULL, "
-                        + "`data` TINYINT NOT NULL, "
-                        + "`sign_text` varchar(75) NOT NULL, "
-                        + "`applied` bit default 0, "
-                        + "`contents` TEXT NOT NULL, "
-                        + "PRIMARY KEY  (`id`), "
-                        + "UNIQUE KEY `uq_trans_2` (`x`,`y`,`z`,`world`))");
-            }
-
-            if (!core.existsTable("pstone_players")) {
-                PreciousStones.log("Creating table: pstone_players");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_players` ("
-                        + "`id` bigint(20), "
-                        + "`uuid` varchar(255) default NULL, "
-                        + "`player_name` varchar(16) NOT NULL, "
-                        + "`last_seen` bigint(20) default NULL, "
-                        + "flags TEXT default NULL, "
-                        + "PRIMARY KEY (`player_name`))");
-            }
 
             if (!core.existsTable("pstone_snitches")) {
                 PreciousStones.log("Creating table: pstone_snitches");
@@ -260,142 +135,9 @@ public class StorageManager {
                 addIndexes();
             }
         } else {
-            core = new SQLiteCore2("PreciousStones", plugin.getDataFolder().getPath());
+
 
             PreciousStones.log("dbSqliteConnected");
-
-            if (!core.existsTable("pstone_cuboids")) {
-                PreciousStones.log("Creating table: pstone_cuboids");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_cuboids` ("
-                        + "`id` INTEGER PRIMARY KEY, "
-                        + "`parent` bigint(20) NOT NULL, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`minx` int(11) default NULL, "
-                        + "`maxx` int(11) default NULL, "
-                        + "`miny` int(11) default NULL, "
-                        + "`maxy` int(11) default NULL, "
-                        + "`minz` int(11) default NULL, "
-                        + "`maxz` int(11) default NULL, "
-                        + "`velocity` float default NULL, "
-                        + "`type_id` int(11) default NULL, "
-                        + "`data` tinyint default 0, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`name` varchar(50) NOT NULL, "
-                        + "`packed_allowed` text NOT NULL, "
-                        + "`last_used` bigint(20) Default NULL, "
-                        + "`flags` TEXT NOT NULL, UNIQUE (`x`,`y`,`z`,`world`))");
-            }
-
-            if (!core.existsTable("pstone_fields")) {
-                PreciousStones.log("Creating table: pstone_fields");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_fields` ("
-                        + "`id` INTEGER PRIMARY KEY, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`radius` int(11) default NULL, "
-                        + "`height` int(11) default NULL, "
-                        + "`velocity` float default NULL, "
-                        + "`type_id` int(11) default NULL, "
-                        + "`data` tinyint default 0, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`name` varchar(50) NOT NULL, "
-                        + "`packed_allowed` text NOT NULL, "
-                        + "`last_used` bigint(20) Default NULL, "
-                        + "`flags` TEXT NOT NULL, "
-                        + "UNIQUE (`x`,`y`,`z`,`world`))");
-            }
-
-            if (!core.existsTable("pstone_unbreakables")) {
-                PreciousStones.log("Creating table: pstone_unbreakables");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_unbreakables` ("
-                        + "`id` INTEGER PRIMARY KEY, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`type_id` int(11) default NULL, "
-                        + "`data` tinyint default 0, "
-                        + "UNIQUE (`x`,`y`,`z`,`world`))");
-            }
-
-            if (!core.existsTable("pstone_grief_undo")) {
-                PreciousStones.log("Creating table: pstone_grief_undo");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_grief_undo` ("
-                        + "`id` INTEGER PRIMARY KEY, "
-                        + "`date_griefed` bigint(20), "
-                        + "`field_x` int(11) default NULL, "
-                        + "`field_y` int(11) default NULL, "
-                        + "`field_z` int(11) default NULL, "
-                        + "`world` varchar(25) NOT NULL, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`type_id` int(11) NOT NULL, "
-                        + "`data` TINYINT NOT NULL, "
-                        + "`sign_text` varchar(75) NOT NULL)");
-            }
-
-            if (!core.existsTable("pstone_translocations")) {
-                PreciousStones.log("Creating table: pstone_translocations");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_translocations` ("
-                        + "`id` INTEGER PRIMARY KEY, "
-                        + "`name` varchar(36) NOT NULL, "
-                        + "`player_name` varchar(16) NOT NULL, "
-                        + "`minx` int(11) default NULL, "
-                        + "`maxx` int(11) default NULL, "
-                        + "`miny` int(11) default NULL, "
-                        + "`maxy` int(11) default NULL, "
-                        + "`minz` int(11) default NULL, "
-                        + "`maxz` int(11) default NULL, "
-                        + "UNIQUE (`name`,`player_name`))");
-            }
-
-            if (!core.existsTable("pstone_storedblocks")) {
-                PreciousStones.log("Creating table: pstone_storedblocks");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_storedblocks` ("
-                        + "`id` INTEGER PRIMARY KEY,  "
-                        + "`name` varchar(36) NOT NULL, "
-                        + "`player_name` varchar(16) NOT NULL, "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) NOT NULL, "
-                        + "`type_id` int(11) NOT NULL, "
-                        + "`data` TINYINT NOT NULL, "
-                        + "`sign_text` varchar(75) NOT NULL, "
-                        + "`applied` bit default 0, `contents` TEXT NOT NULL, UNIQUE (`x`,`y`,`z`,`world`));");
-            }
-
-            if (!core.existsTable("pstone_players")) {
-                PreciousStones.log("Creating table: pstone_players");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_players` ("
-                        + "`id` bigint(20), "
-                        + "`uuid` varchar(255) default NULL, "
-                        + "`player_name` varchar(16) NOT NULL, "
-                        + "`last_seen` bigint(20) default NULL, "
-                        + "flags TEXT default NULL, "
-                        + "PRIMARY KEY (`player_name`))");
-            }
 
             if (!core.existsTable("pstone_snitches")) {
                 PreciousStones.log("Creating table: pstone_snitches");
@@ -455,6 +197,7 @@ public class StorageManager {
             updateUUID();
             addIndexes();
         }
+        return core;
     }
     
     private Connection getConnection() throws SQLException {
