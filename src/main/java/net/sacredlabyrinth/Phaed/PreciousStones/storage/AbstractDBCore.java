@@ -36,58 +36,21 @@ abstract class AbstractDBCore implements DBCore {
     public void close() {
         getDataSource().close();
     }
-    
-    /*
-     * Here temporarily
-     */
-    
-    @Override
-    public ResultSet select(String query) {
-        return null;
-    }
 
     @Override
-    public long insert(String query) {
-        return 0;
-    }
-
-    @Override
-    public void update(String query) {
-    }
-
-    @Override
-    public void delete(String query) {
-    }
-
-    @Override
-    public Boolean execute(String query) {
-        return null;
-    }
-
-    @Override
-    public boolean existsTable(String table) {
-        try (Connection conn = getConnection();
-                ResultSet tables = conn.getMetaData().getTables(null, null, table, null)) {
+    public boolean tableExists(Connection conn, String table) throws SQLException {
+        try (ResultSet tables = conn.getMetaData().getTables(null, null, table, null)) {
 
             return tables.next();
-
-        } catch (SQLException ex) {
-            ex.printStackTrace();
         }
-        return false;
     }
 
     @Override
-    public boolean existsColumn(String table, String column) {
-        try (Connection conn = getConnection();
-                ResultSet columns = conn.getMetaData().getColumns(null, null, table, column)) {
+    public boolean columnExists(Connection conn, String table, String column) throws SQLException {
+        try (ResultSet columns = conn.getMetaData().getColumns(null, null, table, column)) {
 
             return columns.next();
-
-        } catch (SQLException ex) {
-            ex.printStackTrace();
         }
-        return false;
     }
     
 }

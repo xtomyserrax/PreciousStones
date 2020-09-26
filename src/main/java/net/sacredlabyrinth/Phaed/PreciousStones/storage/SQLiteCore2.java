@@ -1,6 +1,7 @@
 package net.sacredlabyrinth.Phaed.PreciousStones.storage;
 
 import java.io.File;
+import java.sql.Connection;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -39,9 +40,13 @@ class SQLiteCore2 extends AbstractDBCore {
     }
     
     @Override
-    public String getDataType(String table, String column) {
-        // not supported
-        return "";
+    public boolean supportsGetDataType() {
+        return false;
+    }
+    
+    @Override
+    public String getDataType(Connection conn, String table, String column) {
+        throw new UnsupportedOperationException();
     }
 
 }

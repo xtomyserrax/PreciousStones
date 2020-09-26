@@ -56,7 +56,7 @@ public class StorageManager {
      *
      */
     private final DBCore core;
-    private PreciousStones plugin;
+    private final PreciousStones plugin;
     private final Map<Vec, Field> pending = new HashMap<>();
     private final Set<Field> pendingGrief = new HashSet<>();
     private final Map<Unbreakable, Boolean> pendingUb = new HashMap<>();
@@ -94,225 +94,27 @@ public class StorageManager {
         }
         try (TableCreator creator = new TableCreator(core)) {
             creator.createTables();
-        }
 
-        if (isMySql) {
-
-            PreciousStones.log("dbMysqlConnected");
-
-            if (!core.existsTable("pstone_snitches")) {
-                PreciousStones.log("Creating table: pstone_snitches");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_snitches` ("
-                        + "`id` bigint(20), `x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`name` varchar(16) NOT NULL, "
-                        + "`reason` varchar(20) default NULL, "
-                        + "`details` varchar(50) default NULL, "
-                        + "`count` int(11) default NULL, "
-                        + "`date` varchar(25) default NULL, "
-                        + "PRIMARY KEY  (`x`, `y`, `z`, `world`, `name`, `reason`, `details`))");
-
-                addIndexes();
+            if (settings.getVersion() < 9) {
+                creator.addData();
+                settings.setVersion(9);
             }
 
-            if (!core.existsTable("pstone_purchase_payments")) {
-                PreciousStones.log("Creating table: pstone_purchase_payments");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_purchase_payments` ("
-                        + "`id` bigint(20), "
-                        + "`buyer` varchar(16) default NULL, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`item` varchar(20) default NULL, "
-                        + "`amount` int(11) default NULL, "
-                        + "`fieldName` varchar(255) default NULL, "
-                        + "`coords` varchar(255) default NULL)");
-
-                addIndexes();
-            }
-        } else {
-
-
-            PreciousStones.log("dbSqliteConnected");
-
-            if (!core.existsTable("pstone_snitches")) {
-                PreciousStones.log("Creating table: pstone_snitches");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_snitches` ("
-                        + "`id` bigint(20), "
-                        + "`x` int(11) default NULL, "
-                        + "`y` int(11) default NULL, "
-                        + "`z` int(11) default NULL, "
-                        + "`world` varchar(25) default NULL, "
-                        + "`name` varchar(16) NOT NULL, "
-                        + "`reason` varchar(20) default NULL, "
-                        + "`details` varchar(50) default NULL, "
-                        + "`count` int(11) default NULL, "
-                        + "`date` varchar(25) default NULL, "
-                        + "PRIMARY KEY (`x`, `y`, `z`, `world`, `name`, `reason`, `details`))");
-
-                addIndexes();
+            if (settings.getVersion() < 10) {
+                creator.addSnitchDate();
+                settings.setVersion(10);
             }
 
-            if (!core.existsTable("pstone_purchase_payments")) {
-                PreciousStones.log("Creating table: pstone_purchase_payments");
-
-                core.execute(
-                        "CREATE TABLE IF NOT EXISTS `pstone_purchase_payments` ("
-                        + "`id` bigint(20), "
-                        + "`buyer` varchar(16) default NULL, "
-                        + "`owner` varchar(16) NOT NULL, "
-                        + "`item` varchar(20) default NULL, "
-                        + "`amount` int(11) default NULL, "
-                        + "`fieldName` varchar(255) default NULL, "
-                        + "`coords` varchar(255) default NULL)");
-
-                addIndexes();
+            if (isMySql && settings.getVersion() < 12) {
+                creator.resetLastSeen();
+                settings.setVersion(12);
             }
-        }
-
-        if (plugin.getSettingsManager().getVersion() < 9) {
-            addData();
-            plugin.getSettingsManager().setVersion(9);
-        }
-
-        if (plugin.getSettingsManager().getVersion() < 10) {
-            addSnitchDate();
-            plugin.getSettingsManager().setVersion(10);
-        }
-
-        if (plugin.getSettingsManager().isUseMysql()) {
-            if (plugin.getSettingsManager().getVersion() < 12) {
-                resetLastSeen();
-                plugin.getSettingsManager().setVersion(12);
-            }
-        }
-
-        if (!core.existsColumn("pstone_players", "uuid")) {
-            updateUUID();
-            addIndexes();
         }
         return core;
     }
     
     private Connection getConnection() throws SQLException {
         return core.getConnection();
-    }
-
-    /**
-     * Bukkit 1.7.5+ UUID updates
-     *
-     * @param
-     */
-    private void updateUUID() {
-        String query;
-
-        query = "ALTER TABLE `pstone_players` ADD `uuid` VARCHAR( 255 ) DEFAULT NULL;";
-        core.execute(query);
-
-        PreciousStones.log("Added UUID modification to database");
-    }
-
-    public void addIndexes() {
-        String query;
-
-        if (plugin.getSettingsManager().isUseMysql()) {
-            query = "ALTER TABLE `pstone_grief_undo` ADD UNIQUE KEY `key_grief_locs` (`x`, `y`, `z`, `world`);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_fields` ADD INDEX `indx_field_owner` (`owner`);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_players` ADD UNIQUE `unq_uuid` (uuid);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_players` ADD INDEX `inx_player_name` (player_name);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_owner` (`owner`);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_parent` (`parent`);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_unbreakables` ADD INDEX `indx_unbreakables_owner` (`owner`);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_1` (`name`, `player_name`, `applied`);";
-            core.execute(query);
-
-            query = "ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_2` (`name`, `player_name`, `applied`, `type_id`, `data`);";
-            core.execute(query);
-        } else {
-            query = "CREATE INDEX IF NOT EXISTS `indx_field_owner` ON `pstone_fields` (`owner`);";
-            core.execute(query);
-
-            query = "CREATE UNIQUE INDEX IF NOT EXISTS `indx_players_uuid` ON `pstone_players` (`uuid`);";
-            core.execute(query);
-
-            query = "CREATE UNIQUE INDEX IF NOT EXISTS `indx_player_name` ON `pstone_players` (`player_name`);";
-            core.execute(query);
-
-            query = "CREATE INDEX IF NOT EXISTS `indx_cuboids_owner` ON `pstone_cuboids` (`owner`);";
-            core.execute(query);
-
-            query = "CREATE INDEX IF NOT EXISTS `indx_cuboids_parent` ON `pstone_cuboids` (`parent`);";
-            core.execute(query);
-
-            query = "CREATE INDEX IF NOT EXISTS `indx_unbreakables_owner` ON `pstone_unbreakables` (`owner`);";
-            core.execute(query);
-        }
-
-        PreciousStones.log("Added new indexes to database");
-    }
-
-    private void resetLastSeen() {
-        PreciousStones.log("Updating last seen dates to new time format");
-
-        if (!core.getDataType("pstone_grief_undo", "date_griefed").equals("bigint")) {
-            core.execute("alter table pstone_grief_undo modify date_griefed bigint");
-            core.execute("update pstone_grief_undo date_griefed = " + Helper.getMillis());
-        }
-
-        if (!core.getDataType("pstone_fields", "last_used").equals("bigint")) {
-            core.execute("alter table pstone_fields modify last_used bigint");
-            core.execute("update pstone_fields last_used = " + Helper.getMillis());
-        }
-
-        if (!core.getDataType("pstone_cuboids", "last_used").equals("bigint")) {
-            core.execute("alter table pstone_cuboids modify last_used bigint");
-            core.execute("update pstone_cuboids last_used = " + Helper.getMillis());
-        }
-
-        if (!core.getDataType("pstone_players", "last_seen").equals("bigint")) {
-            core.execute("alter table pstone_players modify last_seen bigint");
-            core.execute("update pstone_players last_seen = " + Helper.getMillis());
-        }
-    }
-
-    private void addData() {
-        if (!core.getDataType("pstone_fields", "data").equals("tinyint")) {
-            core.execute("alter table pstone_fields add column data tinyint default 0");
-        }
-
-        if (!core.getDataType("pstone_cuboids", "data").equals("tinyint")) {
-            core.execute("alter table pstone_cuboids add column data tinyint default 0");
-        }
-
-        if (!core.getDataType("pstone_unbreakables", "data").equals("tinyint")) {
-            core.execute("alter table pstone_unbreakables add column data tinyint default 0");
-        }
-    }
-
-    private void addSnitchDate() {
-        if (!core.getDataType("pstone_snitches", "date").equals("varchar")) {
-            core.execute("alter table pstone_snitches add column date varchar(25) default NULL");
-        }
     }
 
     /**
@@ -488,11 +290,7 @@ public class StorageManager {
      * @param worldName the world name
      */
     public void loadWorldUnbreakables(String worldName) {
-        List<Unbreakable> unbreakables;
-
-        synchronized (this) {
-            unbreakables = getUnbreakables(worldName);
-        }
+        List<Unbreakable> unbreakables = getUnbreakables(worldName);
 
         for (Unbreakable ub : unbreakables) {
             plugin.getUnbreakableManager().addToCollection(ub);
@@ -946,28 +744,30 @@ public class StorageManager {
      * @param worldName
      * @return
      */
-    public List<Unbreakable> getUnbreakables(String worldName) {
+    private List<Unbreakable> getUnbreakables(String worldName) {
         List<Unbreakable> out = new ArrayList<>();
 
         try (Connection conn = getConnection();
                 PreparedStatement prepStmt = conn.prepareStatement("SELECT * FROM  `pstone_unbreakables` WHERE world = ?")) {
 
             prepStmt.setString(1, worldName);
-            try (ResultSet resultSet = prepStmt.executeQuery()) {
-                while (resultSet.next()) {
+            synchronized (this) {
+                try (ResultSet resultSet = prepStmt.executeQuery()) {
+                    while (resultSet.next()) {
 
-                    int x = resultSet.getInt("x");
-                    int y = resultSet.getInt("y");
-                    int z = resultSet.getInt("z");
-                    int type_id = resultSet.getInt("type_id");
-                    String world = resultSet.getString("world");
-                    String owner = resultSet.getString("owner");
+                        int x = resultSet.getInt("x");
+                        int y = resultSet.getInt("y");
+                        int z = resultSet.getInt("z");
+                        int type_id = resultSet.getInt("type_id");
+                        String world = resultSet.getString("world");
+                        String owner = resultSet.getString("owner");
 
-                    BlockTypeEntry type = new BlockTypeEntry(Helper.getMaterial(type_id));
+                        BlockTypeEntry type = new BlockTypeEntry(Helper.getMaterial(type_id));
 
-                    Unbreakable ub = new Unbreakable(x, y, z, world, type, owner);
+                        Unbreakable ub = new Unbreakable(x, y, z, world, type, owner);
 
-                    out.add(ub);
+                        out.add(ub);
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -2384,7 +2184,8 @@ public class StorageManager {
      * @return
      */
     public BukkitTask saverScheduler() {
-        return Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::processQueue, 0, 20L * plugin.getSettingsManager().getSaveFrequency());
+        return Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::processQueue,
+                0, 20L * plugin.getSettingsManager().getSaveFrequency());
     }
 
     /**
@@ -2424,7 +2225,8 @@ public class StorageManager {
             pendingSnitchEntries.clear();
         }
 
-        if (working.isEmpty() && workingUb.isEmpty() && workingGrief.isEmpty() && workingPlayers.isEmpty() && workingSnitchEntries.isEmpty()) {
+        if (working.isEmpty() && workingUb.isEmpty() && workingGrief.isEmpty()
+                && workingPlayers.isEmpty() && workingSnitchEntries.isEmpty()) {
             return;
         }
         try (Connection conn = getConnection()) {

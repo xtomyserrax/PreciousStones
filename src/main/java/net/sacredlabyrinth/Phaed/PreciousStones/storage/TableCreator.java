@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
+import net.sacredlabyrinth.Phaed.PreciousStones.helpers.Helper;
+
 class TableCreator implements AutoCloseable {
 
     private final DBCore core;
@@ -24,10 +27,23 @@ class TableCreator implements AutoCloseable {
         createTranslocations();
         createStoredBlocks();
         createPlayers();
+        createSnitches();
+        createPurchasePayments();
     }
     
-    private void execute(String createTable) throws SQLException {
-        try (PreparedStatement prepStmt = conn.prepareStatement(createTable)) {
+    boolean tableExists(String table) throws SQLException {
+        return core.tableExists(conn, table);
+    }
+    
+    private void execute(String statement) throws SQLException {
+        try (PreparedStatement prepStmt = conn.prepareStatement(statement)) {
+            prepStmt.execute();
+        }
+    }
+    
+    private void execute(String statement, Object param1) throws SQLException {
+        try (PreparedStatement prepStmt = conn.prepareStatement(statement)) {
+            prepStmt.setObject(1, param1);
             prepStmt.execute();
         }
     }
@@ -158,6 +174,128 @@ class TableCreator implements AutoCloseable {
                 + "`last_seen` bigint(20) default NULL, "
                 + "flags TEXT default NULL, "
                 + "PRIMARY KEY (`player_name`))");
+    }
+    
+    private void createSnitches() throws SQLException {
+        if (tableExists("pstone_snitches")) {
+            return;
+        }
+        execute(
+                "CREATE TABLE IF NOT EXISTS `pstone_snitches` ("
+                + "`id` bigint(20), "
+                + "`x` int(11) default NULL, "
+                + "`y` int(11) default NULL, "
+                + "`z` int(11) default NULL, "
+                + "`world` varchar(25) default NULL, "
+                + "`name` varchar(16) NOT NULL, "
+                + "`reason` varchar(20) default NULL, "
+                + "`details` varchar(50) default NULL, "
+                + "`count` int(11) default NULL, "
+                + "`date` varchar(25) default NULL, "
+                + "PRIMARY KEY (`x`, `y`, `z`, `world`, `name`, `reason`, `details`))");
+
+        addIndexes();
+    }
+    
+    private void createPurchasePayments() throws SQLException {
+        if (tableExists("pstone_purchase_payments")) {
+            return;
+        }
+        execute(
+                "CREATE TABLE IF NOT EXISTS `pstone_purchase_payments` ("
+                + "`id` bigint(20), "
+                + "`buyer` varchar(16) default NULL, "
+                + "`owner` varchar(16) NOT NULL, "
+                + "`item` varchar(20) default NULL, "
+                + "`amount` int(11) default NULL, "
+                + "`fieldName` varchar(255) default NULL, "
+                + "`coords` varchar(255) default NULL)");
+
+        addIndexes();
+    }
+    
+    private void addIndexes() throws SQLException {
+        if (isMySql) {
+            execute("ALTER TABLE `pstone_grief_undo` ADD UNIQUE KEY `key_grief_locs` (`x`, `y`, `z`, `world`)");
+
+            execute("ALTER TABLE `pstone_fields` ADD INDEX `indx_field_owner` (`owner`);");
+
+            execute("ALTER TABLE `pstone_players` ADD UNIQUE `unq_uuid` (uuid);");
+
+            execute("ALTER TABLE `pstone_players` ADD INDEX `inx_player_name` (player_name);");
+
+            execute("ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_owner` (`owner`);");
+
+            execute("ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_parent` (`parent`);");
+
+            execute("ALTER TABLE `pstone_unbreakables` ADD INDEX `indx_unbreakables_owner` (`owner`);");
+
+            execute("ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_1` (`name`, `player_name`, `applied`);");
+
+            execute("ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_2` (`name`, `player_name`, `applied`, `type_id`, `data`);");
+        } else {
+            execute("CREATE INDEX IF NOT EXISTS `indx_field_owner` ON `pstone_fields` (`owner`);");
+
+            execute("CREATE UNIQUE INDEX IF NOT EXISTS `indx_players_uuid` ON `pstone_players` (`uuid`);");
+
+            execute("CREATE UNIQUE INDEX IF NOT EXISTS `indx_player_name` ON `pstone_players` (`player_name`);");
+
+            execute("CREATE INDEX IF NOT EXISTS `indx_cuboids_owner` ON `pstone_cuboids` (`owner`);");
+
+            execute("CREATE INDEX IF NOT EXISTS `indx_cuboids_parent` ON `pstone_cuboids` (`parent`);");
+
+            execute("CREATE INDEX IF NOT EXISTS `indx_unbreakables_owner` ON `pstone_unbreakables` (`owner`);");
+        }
+        PreciousStones.log("Added new indexes to database");
+    }
+    
+    private String getDataType(String table, String column) throws SQLException {
+        if (!core.supportsGetDataType()) {
+            return "";
+        }
+        return core.getDataType(conn, table, column);
+    }
+
+    void addData() throws SQLException {
+        if (!getDataType("pstone_fields", "data").equals("tinyint")) {
+            execute("alter table pstone_fields add column data tinyint default 0");
+        }
+
+        if (!getDataType("pstone_cuboids", "data").equals("tinyint")) {
+            execute("alter table pstone_cuboids add column data tinyint default 0");
+        }
+
+        if (!getDataType("pstone_unbreakables", "data").equals("tinyint")) {
+            execute("alter table pstone_unbreakables add column data tinyint default 0");
+        }
+    }
+
+    void addSnitchDate() throws SQLException {
+        if (!getDataType("pstone_snitches", "date").equals("varchar")) {
+            execute("alter table pstone_snitches add column date varchar(25) default NULL");
+        }
+    }
+    
+    void resetLastSeen() throws SQLException {
+        if (!getDataType("pstone_grief_undo", "date_griefed").equals("bigint")) {
+            execute("alter table pstone_grief_undo modify date_griefed bigint");
+            execute("update pstone_grief_undo date_griefed = ?", Helper.getMillis());
+        }
+
+        if (!getDataType("pstone_fields", "last_used").equals("bigint")) {
+            execute("alter table pstone_fields modify last_used bigint");
+            execute("update pstone_fields last_used = ?", Helper.getMillis());
+        }
+
+        if (!getDataType("pstone_cuboids", "last_used").equals("bigint")) {
+            execute("alter table pstone_cuboids modify last_used bigint");
+            execute("update pstone_cuboids last_used = ?", Helper.getMillis());
+        }
+
+        if (!getDataType("pstone_players", "last_seen").equals("bigint")) {
+            execute("alter table pstone_players modify last_seen bigint");
+            execute("update pstone_players last_seen = ?", Helper.getMillis());
+        }
     }
     
     @Override

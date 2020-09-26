@@ -1,12 +1,12 @@
 package net.sacredlabyrinth.Phaed.PreciousStones.storage;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.SQLException;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
-import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
 
 class MySQLCore2 extends AbstractDBCore {
 
@@ -36,32 +36,24 @@ class MySQLCore2 extends AbstractDBCore {
     }
     
     @Override
-    public String getDataType(String table, String column) {
-        String query = "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + table + "' AND COLUMN_NAME = '" + column + "';";
-
+    public boolean supportsGetDataType() {
+        return true;
+    }
+    
+    @Override
+    public String getDataType(Connection conn, String table, String column) throws SQLException {
         String dataType = "";
-        try {
-            Statement statement = getConnection().createStatement();
-
-            ResultSet res = statement.executeQuery(query);
-
-            if (res != null) {
-                while (res.next()) {
-                    dataType = res.getString("DATA_TYPE");
+        try (PreparedStatement prepStmt = conn.prepareStatement(
+                "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?")) {
+            prepStmt.setString(1, table);
+            prepStmt.setString(2, column);
+            try (ResultSet resultSet = prepStmt.executeQuery()) {
+                while (resultSet.next()) {
+                    dataType = resultSet.getString("DATA_TYPE");
                 }
             }
-        } catch (Exception ex) {
-            //log.severe("Error at SQL Query: " + ex.getMessage());
-            //log.severe("Query: " + query);
         }
-
-        PreciousStones.debug("Column %s in table %s has datatype: %s", column, table, dataType);
-
-        if (dataType == null) {
-            return "";
-        }
-
-        return dataType;
+        return (dataType == null) ? "" : dataType;
     }
     
 }
