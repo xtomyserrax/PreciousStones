@@ -802,7 +802,7 @@ public class StorageManager {
             creator.add("velocity = ?", field.getVelocity());
         }
         if (field.isDirty(DirtyFieldReason.NAME)) {
-            creator.add("name = ", field.getName());
+            creator.add("name = ?", field.getName());
         }
         if (field.isDirty(DirtyFieldReason.ALLOWED)) {
             creator.add("packed_allowed = ?", field.getPackedAllowed());
