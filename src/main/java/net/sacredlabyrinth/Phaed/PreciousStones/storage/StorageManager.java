@@ -869,10 +869,13 @@ public class StorageManager {
         if (field.hasFlag(FieldFlag.CUBOID)) {
             query = "INSERT INTO `pstone_cuboids` (`parent`, `x`, `y`, `z`, `world`, `minx`, `miny`, `minz`, "
                     + "`maxx`, `maxy`, `maxz`, `velocity`, `type_id`, `data`, `owner`, `name`, `packed_allowed`, "
-                    + "`last_used`, `flags`) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    + "`last_used`, `flags`) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             parameters = new Object[] {
-                    ((field.getParent() == null) ? 0 : field.getParent().getId()), field.getX(), field.getY(), field.getZ(),
-                    field.getWorld(), field.getMinx(), field.getMiny(), field.getMinz(), field.getMaxx(), field.getMaxy(), field.getMaxz(),
+                    ((field.getParent() == null) ? 0 : field.getParent().getId()),
+                    field.getX(), field.getY(), field.getZ(),
+                    field.getWorld(),
+                    field.getMinx(), field.getMiny(), field.getMinz(),
+                    field.getMaxx(), field.getMaxy(), field.getMaxz(),
                     field.getVelocity(), Helper.getMaterialId(field.getMaterial()), 0, field.getOwner(), field.getName(),
                     field.getPackedAllowed(), Helper.getMillis(), field.getFlagsModule().getFlagsAsString()
             };
