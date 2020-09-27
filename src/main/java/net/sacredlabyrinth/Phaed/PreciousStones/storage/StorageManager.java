@@ -1133,18 +1133,34 @@ public class StorageManager {
     }
     
     private void insertSnitchEntry0(Connection conn, Field snitch, SnitchEntry se) throws SQLException {
-        Object[] parameters = new Object[] {snitch.getX(), snitch.getY(), snitch.getZ(), snitch.getWorld(),
-                se.getName(), se.getReason(), Helper.getMillis()};
+        long date = Helper.getMillis();
 
-        String query = "{insert} `pstone_snitches` (`x`, `y`, `z`, `world`, `name`, `reason`, `details`, `count`, `date`) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) {update} count = count+1";
-        query = core.getVendorType().parseInsertOrUpdate(query, "`pstone_snitches`");
+        if (core.getVendorType().supportsInsertOnDuplicateKeyUpdate()) {
+            try (PreparedStatement prepStmt = conn.prepareStatement(
+                    "INSERT INTO `pstone_snitches` (`x`, `y`, `z`, `world`, `name`, `reason`, `details`, `count`, `date`) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE count = count + 1")) {
 
-        try (PreparedStatement prepStmt = conn.prepareStatement(query)) {
+                SqlUtils.setArguments(prepStmt,
+                        snitch.getX(), snitch.getY(), snitch.getZ(), snitch.getWorld(),
+                        se.getName(), se.getReason(), se.getDetails(), 1, date);
+                synchronized (this) {
+                    prepStmt.execute();
+                }
+            }
+        } else {
+            try (PreparedStatement insertStmt = conn.prepareStatement(
+                    "INSERT OR IGNORE INTO `pstone_snitches` (`x`, `y`, `z`, `world`, `name`, `reason`, `details`, `count`, `date`) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    PreparedStatement updateStmt = conn.prepareStatement(
+                            "UPDATE `pstone_snitches` SET count = count + 1")) {
 
-            SqlUtils.setArguments(prepStmt, parameters);
-            synchronized (this) {
-                prepStmt.execute();
+                SqlUtils.setArguments(insertStmt,
+                        snitch.getX(), snitch.getY(), snitch.getZ(), snitch.getWorld(),
+                        se.getName(), se.getReason(), se.getDetails(), 1, date);
+                synchronized (this) {
+                    insertStmt.execute();
+                    updateStmt.execute();
+                }
             }
         }
     }
@@ -1253,18 +1269,29 @@ public class StorageManager {
         long time = Helper.getMillis();
         PlayerEntry data = plugin.getPlayerManager().getPlayerEntry(playerName);
 
-        Object[] parameters = {playerName, data.getOnlineUUID(), time, data.getFlags(), time, data.getFlags()};
+        if (core.getVendorType().supportsInsertOnDuplicateKeyUpdate()) {
+            try (PreparedStatement prepStmt = conn.prepareStatement(
+                    "INSERT INTO `pstone_players` (`player_name`, `uuid`, `last_seen`, `flags`) "
+                    + "VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE last_seen = ?, flags = ?")) {
 
-        String query = "{insert} `pstone_players` (`player_name`, `uuid`, `last_seen`, `flags`) "
-                + "VALUES (?, ?, ?, ?) {update} last_seen = ?, flags = ?";
-        PreciousStones.debug(query);
-        query = core.getVendorType().parseInsertOrUpdate(query, "`pstone_players`");
+                SqlUtils.setArguments(prepStmt, playerName, data.getOnlineUUID(), time, data.getFlags(), time, data.getFlags());
+                synchronized (this) {
+                    prepStmt.execute();
+                }
+            }
+        } else {
+            try (PreparedStatement insertStmt = conn.prepareStatement(
+                    "INSERT OR IGNORE INTO `pstone_players` (`player_name`, `uuid`, `last_seen`, `flags`) "
+                    + "VALUES (?, ?, ?, ?)");
+                    PreparedStatement updateStmt = conn.prepareStatement(
+                            "UPDATE last_seen = ?, flags = ? WHERE WHERE player_name = ?")) {
 
-        try (PreparedStatement prepStmt = conn.prepareStatement(query)) {
-
-            SqlUtils.setArguments(prepStmt, parameters);
-            synchronized (this) {
-                prepStmt.execute();
+                SqlUtils.setArguments(insertStmt, playerName, data.getOnlineUUID(), time, data.getFlags());
+                SqlUtils.setArguments(updateStmt, time, data.getFlags(), playerName);
+                synchronized (this) {
+                    insertStmt.execute();
+                    updateStmt.execute();
+                }
             }
         }
     }

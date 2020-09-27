@@ -9,7 +9,7 @@ final class SqlUtils {
 
     private SqlUtils() {}
     
-    static void setArguments(PreparedStatement prepStmt, Object[] parameters) throws SQLException {
+    static void setArguments(PreparedStatement prepStmt, Object...parameters) throws SQLException {
         for (int n = 0; n < parameters.length; n++) {
             prepStmt.setObject(n + 1, parameters[n]);
         }
