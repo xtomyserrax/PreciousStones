@@ -519,7 +519,7 @@ public class StorageManager {
     try (PreparedStatement prepStmt = conn.prepareStatement(
             "SELECT pstone_cuboids.id as id, parent, x, y, z, minx, miny, minz, maxx, maxy, maxz, "
             + "type_id, data, velocity, world, owner, name, packed_allowed, last_used, flags "
-            + "FROM pstone_cuboids WHERE pstone_cuboids.parent > 0 AND world = ?'")) {
+            + "FROM pstone_cuboids WHERE pstone_cuboids.parent > 0 AND world = ?")) {
         prepStmt.setString(1, worldName);
 
         try (ResultSet resultSet = prepStmt.executeQuery()) {
@@ -1257,6 +1257,7 @@ public class StorageManager {
 
         String query = "{insert} `pstone_players` (`player_name`, `uuid`, `last_seen`, `flags`) "
                 + "VALUES (?, ?, ?, ?) {update} last_seen = ?, flags = ?";
+        PreciousStones.debug(query);
         query = core.getVendorType().parseInsertOrUpdate(query, "`pstone_players`");
 
         try (PreparedStatement prepStmt = conn.prepareStatement(query)) {
