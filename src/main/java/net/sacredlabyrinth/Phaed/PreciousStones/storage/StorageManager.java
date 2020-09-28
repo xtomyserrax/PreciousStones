@@ -1291,7 +1291,7 @@ public class StorageManager {
                     "INSERT OR IGNORE INTO `pstone_players` (`player_name`, `uuid`, `last_seen`, `flags`) "
                     + "VALUES (?, ?, ?, ?)");
                     PreparedStatement updateStmt = conn.prepareStatement(
-                            "UPDATE last_seen = ?, flags = ? WHERE WHERE player_name = ?")) {
+                            "UPDATE last_seen = ?, flags = ? WHERE player_name = ?")) {
 
                 SqlUtils.setArguments(insertStmt, playerName, data.getOnlineUUID(), time, data.getFlags());
                 SqlUtils.setArguments(updateStmt, time, data.getFlags(), playerName);
