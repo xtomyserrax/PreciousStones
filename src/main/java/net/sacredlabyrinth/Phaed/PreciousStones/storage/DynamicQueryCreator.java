@@ -46,8 +46,8 @@ class DynamicQueryCreator {
      * @throws SQLException per JDBC, generally
      */
     int setParameters(PreparedStatement prepStmt, int offset) throws SQLException {
-        for (int n = 1; n <= parameters.size(); n++) {
-            prepStmt.setObject(offset + n, parameters.get(n));
+        for (int n = 0; n < parameters.size(); n++) {
+            prepStmt.setObject(offset + 1 + n, parameters.get(n));
         }
         return parameters.size();
     }
