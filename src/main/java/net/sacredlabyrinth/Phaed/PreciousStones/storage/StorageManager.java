@@ -1155,11 +1155,15 @@ public class StorageManager {
                     "INSERT OR IGNORE INTO `pstone_snitches` (`x`, `y`, `z`, `world`, `name`, `reason`, `details`, `count`, `date`) "
                     + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     PreparedStatement updateStmt = conn.prepareStatement(
-                            "UPDATE `pstone_snitches` SET count = count + 1")) {
+                            "UPDATE `pstone_snitches` SET count = count + 1 "
+                            + "WHERE x = ? AND y = ? AND z = ? AND world = ? AND name = ? AND reason = ? AND details = ?")) {
 
                 SqlUtils.setArguments(insertStmt,
                         snitch.getX(), snitch.getY(), snitch.getZ(), snitch.getWorld(),
-                        se.getName(), se.getReason(), se.getDetails(), 1, date);
+                        se.getName(), se.getReason(), se.getDetails(), 0, date);
+                SqlUtils.setArguments(updateStmt,
+                        snitch.getX(), snitch.getY(), snitch.getZ(), snitch.getWorld(),
+                        se.getName(), se.getReason(), se.getDetails());
                 synchronized (this) {
                     insertStmt.execute();
                     updateStmt.execute();
