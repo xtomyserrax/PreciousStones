@@ -7,11 +7,20 @@ import java.util.List;
 
 class DynamicQueryCreator {
 
-    private final StringBuilder queryBuilder = new StringBuilder();
-    private final List<Object> parameters = new ArrayList<>();
+    private final StringBuilder queryBuilder;
+    private final List<Object> parameters;
+    
+    private DynamicQueryCreator(StringBuilder queryBuilder, List<Object> parameters) {
+        this.queryBuilder = queryBuilder;
+        this.parameters = parameters;
+    }
     
     DynamicQueryCreator() {
-        
+        this(new StringBuilder(), new ArrayList<>());
+    }
+    
+    DynamicQueryCreator(DynamicQueryCreator copyFrom) {
+        this(new StringBuilder(copyFrom.queryBuilder.toString()), new ArrayList<>(copyFrom.parameters));
     }
     
     private void appendWithComma(String content) {

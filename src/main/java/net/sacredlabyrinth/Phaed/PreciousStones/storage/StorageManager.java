@@ -813,9 +813,18 @@ public class StorageManager {
         if (field.isDirty(DirtyFieldReason.FLAGS)) {
             creator.add("flags = ?", field.getFlagsModule().getFlagsAsString());
         }
-        if (field.isDirty(DirtyFieldReason.DIMENSIONS)) {
-            creator.add("minx = ?, miny = ?, minz = ?, maxx = ?, maxy = ?, maxz = ?",
+
+        // Query creator for cuboids only, else null
+        DynamicQueryCreator cuboidCreator;
+        if (field.hasFlag(FieldFlag.CUBOID)) {
+
+            cuboidCreator = new DynamicQueryCreator(creator);
+            if (field.isDirty(DirtyFieldReason.DIMENSIONS)) {
+                cuboidCreator.add("minx = ?, miny = ?, minz = ?, maxx = ?, maxy = ?, maxz = ?",
                     field.getMinx(), field.getMiny(), field.getMinz(), field.getMaxx(), field.getMaxy(), field.getMaxz());
+            }
+        } else {
+            cuboidCreator = null;
         }
         String fieldUpdates = creator.toQueryString();
         if (fieldUpdates.isEmpty()) {
@@ -829,13 +838,17 @@ public class StorageManager {
                 SqlUtils.setFieldCoordinates(prepStmt, field, setCount);
                 prepStmt.execute();
             }
-            if (field.hasFlag(FieldFlag.CUBOID)) {
-                try (PreparedStatement prepStmt = conn.prepareStatement(
-                        "UPDATE `pstone_cuboids` SET " + fieldUpdates + " "
-                        + "WHERE x = ? AND y = ? AND z = ? AND world = ?")) {
-                    int setCount = creator.setParameters(prepStmt, 0);
-                    SqlUtils.setFieldCoordinates(prepStmt, field, setCount);
-                    prepStmt.execute();
+            if (cuboidCreator != null) {
+                String cuboidUpdates = cuboidCreator.toQueryString();
+                if (!cuboidUpdates.isEmpty()) {
+
+                    try (PreparedStatement prepStmt = conn.prepareStatement(
+                            "UPDATE `pstone_cuboids` SET " + cuboidUpdates + " "
+                            + "WHERE x = ? AND y = ? AND z = ? AND world = ?")) {
+                        int setCount = cuboidCreator.setParameters(prepStmt, 0);
+                        SqlUtils.setFieldCoordinates(prepStmt, field, setCount);
+                        prepStmt.execute();
+                    }
                 }
             }
         } finally {
