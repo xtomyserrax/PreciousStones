@@ -5,6 +5,7 @@ import net.sacredlabyrinth.Phaed.PreciousStones.api.IApi;
 import net.sacredlabyrinth.Phaed.PreciousStones.helpers.ChatHelper;
 import net.sacredlabyrinth.Phaed.PreciousStones.listeners.*;
 import net.sacredlabyrinth.Phaed.PreciousStones.managers.*;
+import net.sacredlabyrinth.Phaed.PreciousStones.storage.StorageManager;
 import net.sacredlabyrinth.Phaed.PreciousStones.uuid.UUIDMigration;
 
 import org.bukkit.event.HandlerList;

@@ -1,87 +1,69 @@
 package net.sacredlabyrinth.Phaed.PreciousStones.storage;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * @author phaed
  */
-public interface DBCore {
+public interface DBCore extends AutoCloseable {
+    
     /**
-     * @return connection
+     * Acquires an open connection
+     * 
+     * @return an open connection, which should be closed when done with
+     * @throws SQLException per JDBC
      */
-    Connection getConnection();
+    Connection getConnection() throws SQLException;
+    
+    /**
+     * Gets the vendor used
+     * 
+     * @return the vendor type
+     */
+    VendorType getVendorType();
 
     /**
-     * @return whether connection can be established
+     * Close connection pool
      */
-    Boolean checkConnection();
-
-    /**
-     * Close connection
-     */
+    @Override
     void close();
-
-    /**
-     * Execute a select statement
-     *
-     * @param query
-     * @return
-     */
-    ResultSet select(String query);
-
-    /**
-     * Execute an insert statement
-     *
-     * @param query
-     */
-    long insert(String query);
-
-    /**
-     * Execute an update statement
-     *
-     * @param query
-     */
-    void update(String query);
-
-    /**
-     * Execute a delete statement
-     *
-     * @param query
-     */
-    void delete(String query);
-
-    /**
-     * Execute a statement
-     *
-     * @param query
-     * @return
-     */
-    Boolean execute(String query);
 
     /**
      * Check whether a table exists
      *
-     * @param table
-     * @return
+     * @param conn the connection
+     * @param table the table name
+     * @return true if the table exists
      */
-    Boolean existsTable(String table);
+    boolean tableExists(Connection conn, String table) throws SQLException;
 
     /**
      * Check whether a column exists
      *
-     * @param table
-     * @param column
-     * @return
+     * @param conn the connection
+     * @param table the table name
+     * @param column the column name
+     * @return true if the column exists
      */
-    Boolean existsColumn(String table, String column);
+    boolean columnExists(Connection conn, String table, String column) throws SQLException;
 
     /**
-     * CGEt the datatype of a column
-     *
-     * @param table
-     * @param column
-     * @return
+     * If {@link #getDataType(Connection, String, String)} is supported
+     * 
+     * @return true if supported
      */
-    String getDataType(String table, String column);
+    boolean supportsGetDataType();
+    
+    /**
+     * Get the data type of a column
+     *
+     * @param conn the connection
+     * @param table the table name
+     * @param column the colum name
+     * @return the data type
+     * @throws UnsupportedOperationException if not supported by this database implementation
+     */
+    String getDataType(Connection conn, String table, String column) throws SQLException;
+
 }
