@@ -1294,7 +1294,7 @@ public class StorageManager {
                     "INSERT INTO `pstone_players` (`player_name`, `uuid`, `last_seen`, `flags`) "
                     + "VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE last_seen = ?, flags = ?")) {
 
-                SqlUtils.setArguments(prepStmt, playerName, data.getOnlineUUID(), time, data.getFlags(), time, data.getFlags());
+                SqlUtils.setArguments(prepStmt, playerName, data.getOnlineUUID().toString(), time, data.getFlags(), time, data.getFlags());
                 synchronized (this) {
                     prepStmt.execute();
                 }
@@ -1306,7 +1306,7 @@ public class StorageManager {
                     PreparedStatement updateStmt = conn.prepareStatement(
                             "UPDATE pstone_players SET last_seen = ?, flags = ? WHERE player_name = ?")) {
 
-                SqlUtils.setArguments(insertStmt, playerName, data.getOnlineUUID(), time, data.getFlags());
+                SqlUtils.setArguments(insertStmt, playerName, data.getOnlineUUID().toString(), time, data.getFlags());
                 SqlUtils.setArguments(updateStmt, time, data.getFlags(), playerName);
                 synchronized (this) {
                     insertStmt.execute();
