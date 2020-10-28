@@ -169,7 +169,7 @@ class TableCreator implements AutoCloseable {
     private void createPlayers() throws SQLException {
         execute("CREATE TABLE IF NOT EXISTS `pstone_players` ("
                 + "`id` bigint(20), "
-                + "`uuid` varchar(255) default NULL, "
+                + "`uuid` varchar(36) default NULL, "
                 + "`player_name` varchar(16) NOT NULL, "
                 + "`last_seen` bigint(20) default NULL, "
                 + "flags TEXT default NULL, "
