@@ -195,7 +195,7 @@ class TableCreator implements AutoCloseable {
                 + "`details` varchar(50) default NULL, "
                 + "`count` int(11) default NULL, "
                 + "`date` varchar(25) default NULL, "
-                + "PRIMARY KEY (`x`, `y`, `z`, `world`, `name`, `reason`, `details`))");
+                + "UNIQUE (`x`, `y`, `z`, `world`, `name`, `reason`, `details`))");
 
         addIndexesIfNecessary();
     }
