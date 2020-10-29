@@ -13,6 +13,8 @@ class TableCreator implements AutoCloseable {
     private final Connection conn;
     private final boolean isMySql;
     
+    private boolean addedIndexes;
+    
     TableCreator(DBCore core) throws SQLException {
         this.core = core;
         conn = core.getConnection();
@@ -176,12 +178,13 @@ class TableCreator implements AutoCloseable {
                 + "PRIMARY KEY (`player_name`))");
     }
     
+    private static final String SNITCHES = "pstone_snitches";
     private void createSnitches() throws SQLException {
-        if (tableExists("pstone_snitches")) {
+        if (tableExists(SNITCHES)) {
             return;
         }
         execute(
-                "CREATE TABLE IF NOT EXISTS `pstone_snitches` ("
+                "CREATE TABLE `" + SNITCHES + "` ("
                 + "`id` bigint(20), "
                 + "`x` int(11) default NULL, "
                 + "`y` int(11) default NULL, "
@@ -194,15 +197,16 @@ class TableCreator implements AutoCloseable {
                 + "`date` varchar(25) default NULL, "
                 + "PRIMARY KEY (`x`, `y`, `z`, `world`, `name`, `reason`, `details`))");
 
-        addIndexes();
+        addIndexesIfNecessary();
     }
     
+    private static final String PURCHASE_PAYMENTS = "pstone_purchase_payments";
     private void createPurchasePayments() throws SQLException {
-        if (tableExists("pstone_purchase_payments")) {
+        if (tableExists(PURCHASE_PAYMENTS)) {
             return;
         }
         execute(
-                "CREATE TABLE IF NOT EXISTS `pstone_purchase_payments` ("
+                "CREATE TABLE `" + PURCHASE_PAYMENTS + "` ("
                 + "`id` bigint(20), "
                 + "`buyer` varchar(16) default NULL, "
                 + "`owner` varchar(16) NOT NULL, "
@@ -211,40 +215,63 @@ class TableCreator implements AutoCloseable {
                 + "`fieldName` varchar(255) default NULL, "
                 + "`coords` varchar(255) default NULL)");
 
-        addIndexes();
+        addIndexesIfNecessary();
+    }
+    
+    private void addIndexesIfNecessary() throws SQLException {
+        if (addedIndexes) {
+            return;
+        }
+        addedIndexes = true;
+        try {
+            addIndexes();
+        } catch (SQLException ex) {
+            /*
+             * We need to drop the pstone_purchase_payments and pstone_snitches
+             * tables so that the next startup of PreciousStones will call addIndexes() to retry
+             */
+            try {
+                execute("DROP TABLE IF EXISTS " + SNITCHES);
+                execute("DROP TABLE IF EXISTS " + PURCHASE_PAYMENTS);
+            } catch (SQLException dropTableException) {
+                ex.addSuppressed(dropTableException);
+            }
+            throw ex;
+        }
+
     }
     
     private void addIndexes() throws SQLException {
         if (isMySql) {
             execute("ALTER TABLE `pstone_grief_undo` ADD UNIQUE KEY `key_grief_locs` (`x`, `y`, `z`, `world`)");
 
-            execute("ALTER TABLE `pstone_fields` ADD INDEX `indx_field_owner` (`owner`);");
+            execute("ALTER TABLE `pstone_fields` ADD INDEX `indx_field_owner` (`owner`)");
 
-            execute("ALTER TABLE `pstone_players` ADD UNIQUE `unq_uuid` (uuid);");
+            execute("ALTER TABLE `pstone_players` ADD UNIQUE `unq_uuid` (uuid)");
 
-            execute("ALTER TABLE `pstone_players` ADD INDEX `inx_player_name` (player_name);");
+            execute("ALTER TABLE `pstone_players` ADD INDEX `inx_player_name` (player_name)");
 
-            execute("ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_owner` (`owner`);");
+            execute("ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_owner` (`owner`)");
 
-            execute("ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_parent` (`parent`);");
+            execute("ALTER TABLE `pstone_cuboids` ADD INDEX `indx_cuboids_parent` (`parent`)");
 
-            execute("ALTER TABLE `pstone_unbreakables` ADD INDEX `indx_unbreakables_owner` (`owner`);");
+            execute("ALTER TABLE `pstone_unbreakables` ADD INDEX `indx_unbreakables_owner` (`owner`)");
 
-            execute("ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_1` (`name`, `player_name`, `applied`);");
+            execute("ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_1` (`name`, `player_name`, `applied`)");
 
-            execute("ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_2` (`name`, `player_name`, `applied`, `type_id`, `data`);");
+            execute("ALTER TABLE `pstone_storedblocks` ADD INDEX `indx_storedblocks_2` (`name`, `player_name`, `applied`, `type_id`, `data`)");
         } else {
-            execute("CREATE INDEX IF NOT EXISTS `indx_field_owner` ON `pstone_fields` (`owner`);");
+            execute("CREATE INDEX IF NOT EXISTS `indx_field_owner` ON `pstone_fields` (`owner`)");
 
-            execute("CREATE UNIQUE INDEX IF NOT EXISTS `indx_players_uuid` ON `pstone_players` (`uuid`);");
+            execute("CREATE UNIQUE INDEX IF NOT EXISTS `indx_players_uuid` ON `pstone_players` (`uuid`)");
 
-            execute("CREATE UNIQUE INDEX IF NOT EXISTS `indx_player_name` ON `pstone_players` (`player_name`);");
+            execute("CREATE UNIQUE INDEX IF NOT EXISTS `indx_player_name` ON `pstone_players` (`player_name`)");
 
-            execute("CREATE INDEX IF NOT EXISTS `indx_cuboids_owner` ON `pstone_cuboids` (`owner`);");
+            execute("CREATE INDEX IF NOT EXISTS `indx_cuboids_owner` ON `pstone_cuboids` (`owner`)");
 
-            execute("CREATE INDEX IF NOT EXISTS `indx_cuboids_parent` ON `pstone_cuboids` (`parent`);");
+            execute("CREATE INDEX IF NOT EXISTS `indx_cuboids_parent` ON `pstone_cuboids` (`parent`)");
 
-            execute("CREATE INDEX IF NOT EXISTS `indx_unbreakables_owner` ON `pstone_unbreakables` (`owner`);");
+            execute("CREATE INDEX IF NOT EXISTS `indx_unbreakables_owner` ON `pstone_unbreakables` (`owner`)");
         }
         PreciousStones.log("Added new indexes to database");
     }
